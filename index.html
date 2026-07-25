@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2f8a58" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121c19" media="(prefers-color-scheme: dark)" />
+  <meta name="description" content="School portal — teacher absence alerts, timetable assistant, and anonymous feedback." />
+  <title>Campus Hub — School Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            ink: { 50: '#f4f7f6', 100: '#e4ebe8', 200: '#c5d4ce', 700: '#2a3d38', 800: '#1c2b27', 900: '#121c19' },
+            leaf: { 400: '#5fbf8a', 500: '#3da86e', 600: '#2f8a58', 700: '#256f47' },
+            sun: { 400: '#f0b429', 500: '#e09b17', 600: '#c47e0c' },
+            coral: { 500: '#e85d4c', 600: '#d04434' }
+          },
+          fontFamily: {
+            display: ['"Fraunces"', 'Georgia', 'serif'],
+            sans: ['"DM Sans"', 'system-ui', 'sans-serif']
+          },
+          boxShadow: {
+            soft: '0 8px 30px rgba(18, 28, 25, 0.08)'
+          }
+        }
+      }
+    };
+    // Apply theme before paint to avoid flash
+    (function () {
+      try {
+        var t = localStorage.getItem('campusHub.theme');
+        if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/fx.css" />
+  <link rel="stylesheet" href="css/cloud.css" />
+</head>
+<body class="font-sans text-ink-800 dark:text-ink-100 bg-ink-50 dark:bg-ink-900 antialiased min-h-screen overflow-x-hidden">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-white dark:focus:bg-ink-800 focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-soft">
+    Skip to main content
+  </a>
+
+  <button type="button" id="theme-toggle-landing" class="theme-toggle fixed top-4 right-4 z-30" aria-label="Toggle dark mode" title="Toggle dark mode">
+    <span class="theme-icon-sun" aria-hidden="true">☀</span>
+    <span class="theme-icon-moon" aria-hidden="true">☾</span>
+  </button>
+
+  <div class="fx-orb fx-orb-a" aria-hidden="true"></div>
+  <div class="fx-orb fx-orb-b" aria-hidden="true"></div>
+  <div class="fx-orb fx-orb-c" aria-hidden="true"></div>
+  <div id="fx-burst" class="fx-burst" aria-hidden="true"></div>
+
+  <!-- Batch selection landing -->
+  <section id="batch-landing" class="min-h-screen flex flex-col" aria-labelledby="batch-heading" hidden>
+    <div class="flex-1 flex flex-col justify-center px-4 py-10 sm:py-12 sm:px-6 lg:px-8 safe-x">
+      <div class="mx-auto w-full max-w-3xl text-center landing-hero">
+        <div class="brand-mark" aria-hidden="true">CH</div>
+        <p class="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-2 brand-shimmer">Campus Hub</p>
+        <h1 id="batch-heading" class="text-lg sm:text-2xl text-ink-700 dark:text-ink-200 font-medium mb-3">Pick your batch to jump in</h1>
+        <p class="text-sm sm:text-base text-ink-700/70 dark:text-ink-200/70 max-w-md mx-auto mb-6 px-1">
+          Alerts when teachers are out, your week’s timetable in one tap, and anonymous feedback — built for students.
+        </p>
+
+        <div class="feature-pills" aria-hidden="true">
+          <span class="feature-pill float-pill" style="--d:0s">📢 Live absences</span>
+          <span class="feature-pill float-pill" style="--d:0.4s">📅 Timetable picks</span>
+          <span class="feature-pill float-pill" style="--d:0.8s">💬 Anonymous feedback</span>
+        </div>
+
+        <div id="batch-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4 text-left" role="listbox" aria-label="Available batches"></div>
+
+        <div class="mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3">
+          <label for="batch-select" class="sr-only">Or choose from dropdown</label>
+          <select id="batch-select" class="touch-field w-full sm:w-auto min-w-0 sm:min-w-[220px] rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 px-4 py-3.5 sm:py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500 transition-shadow">
+            <option value="">Or pick from list…</option>
+          </select>
+          <button id="batch-continue" type="button" class="btn-primary w-full sm:w-auto rounded-xl bg-leaf-600 px-6 py-3.5 sm:py-3 font-semibold text-white hover:bg-leaf-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 focus:ring-offset-2 dark:focus:ring-offset-ink-900 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-y-0 min-h-12" disabled>
+            Let’s go →
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="atmosphere-landing" aria-hidden="true"></div>
+  </section>
+
+  <!-- Main app shell -->
+  <div id="app-shell" class="min-h-screen flex flex-col" hidden>
+    <header class="app-header sticky top-0 z-40 border-b border-ink-200/80 dark:border-ink-700/80 bg-white/90 dark:bg-ink-900/90 backdrop-blur-md">
+      <div class="mx-auto max-w-6xl px-3 sm:px-6 safe-x">
+        <div class="flex min-h-14 sm:h-16 items-center justify-between gap-2 sm:gap-3 py-2 sm:py-0">
+          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+            <span class="font-display text-lg sm:text-xl font-semibold text-ink-900 dark:text-white truncate">Campus Hub</span>
+            <span id="batch-badge" class="inline-flex max-w-[40vw] sm:max-w-none truncate items-center rounded-lg bg-leaf-500/10 dark:bg-leaf-500/20 px-2 py-1 text-[11px] sm:text-xs font-semibold text-leaf-700 dark:text-leaf-400"></span>
+            <span id="cloud-status" class="cloud-status hidden text-[10px] sm:text-xs font-semibold tracking-wide" hidden></span>
+          </div>
+          <div class="header-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+              <span class="theme-icon-sun" aria-hidden="true">☀</span>
+              <span class="theme-icon-moon" aria-hidden="true">☾</span>
+            </button>
+            <button id="change-batch-btn" type="button" class="header-text-btn text-xs sm:text-sm font-medium text-ink-700/80 dark:text-ink-200/80 hover:text-ink-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-leaf-500 rounded-md px-2 py-2 min-h-10">
+              <span class="sm:hidden">Batch</span>
+              <span class="hidden sm:inline">Change batch</span>
+            </button>
+            <button id="admin-toggle-btn" type="button" class="rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-ink-700 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-10" aria-haspopup="dialog">
+              Staff
+            </button>
+            <button id="staff-lock-btn" type="button" class="hidden rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-ink-700 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-10" title="End staff session">
+              Lock
+            </button>
+          </div>
+        </div>
+
+        <nav class="tab-nav relative flex gap-0 sm:gap-1 overflow-x-auto overscroll-x-contain pb-px -mb-px -mx-3 px-3 sm:mx-0 sm:px-0" role="tablist" aria-label="Main sections">
+          <span id="tab-ink" class="tab-ink" aria-hidden="true"></span>
+          <button type="button" role="tab" id="tab-absences" aria-controls="panel-absences" aria-selected="true" data-tab="absences" class="tab-btn tab-active flex-1 sm:flex-none shrink-0 px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-leaf-500 min-h-12">
+            <span aria-hidden="true">📢</span>
+            <span class="tab-label-short sm:hidden">Alerts</span>
+            <span class="tab-label-full hidden sm:inline">Absence Alerts</span>
+          </button>
+          <button type="button" role="tab" id="tab-timetable" aria-controls="panel-timetable" aria-selected="false" data-tab="timetable" class="tab-btn flex-1 sm:flex-none shrink-0 px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-leaf-500 min-h-12">
+            <span aria-hidden="true">📅</span>
+            <span class="tab-label-short sm:hidden">Timetable</span>
+            <span class="tab-label-full hidden sm:inline">Timetable Assistant</span>
+          </button>
+          <button type="button" role="tab" id="tab-feedback" aria-controls="panel-feedback" aria-selected="false" data-tab="feedback" class="tab-btn flex-1 sm:flex-none shrink-0 px-2 sm:px-4 py-3 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-leaf-500 min-h-12">
+            <span aria-hidden="true">💬</span>
+            <span class="tab-label-short sm:hidden">Feedback</span>
+            <span class="tab-label-full hidden sm:inline">Feedback Forum</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content" class="flex-1 mx-auto w-full max-w-6xl px-3 sm:px-6 py-4 sm:py-8 safe-x pb-safe">
+      <!-- Urgent banner -->
+      <div id="urgent-banner" class="mb-6 hidden" role="alert" aria-live="polite"></div>
+
+      <!-- Absences panel -->
+      <section id="panel-absences" role="tabpanel" aria-labelledby="tab-absences" class="tab-panel">
+        <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h2 class="font-display text-xl sm:text-2xl font-semibold text-ink-900 dark:text-white">Teacher Absence Alerts</h2>
+            <p class="mt-1 text-sm sm:text-base text-ink-700/70 dark:text-ink-200/70">Live notices for your batch today and upcoming days.</p>
+          </div>
+          <button type="button" id="notify-toggle-btn" class="notify-btn w-full sm:w-auto shrink-0 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 px-3 py-2.5 text-sm font-semibold text-ink-800 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-11">
+            Enable alerts
+          </button>
+        </div>
+        <p id="notify-hint" class="mb-4 text-xs sm:text-sm text-ink-700/60 dark:text-ink-200/60">Turn on alerts to get a pop-up when an urgent cancellation is posted for your batch.</p>
+        <div id="absence-list" class="grid gap-3 md:grid-cols-2" aria-live="polite"></div>
+        <p id="absence-empty" class="hidden rounded-2xl border border-dashed border-ink-200 dark:border-ink-700 bg-white/60 dark:bg-ink-800/40 px-6 py-12 text-center text-ink-700/70 dark:text-ink-200/70">
+          No absence alerts for your batch right now.
+        </p>
+      </section>
+
+      <!-- Timetable panel -->
+      <section id="panel-timetable" role="tabpanel" aria-labelledby="tab-timetable" class="tab-panel hidden" hidden>
+        <div class="mb-4 sm:mb-6">
+          <h2 class="font-display text-xl sm:text-2xl font-semibold text-ink-900 dark:text-white">Timetable Assistant</h2>
+          <p class="mt-1 text-sm sm:text-base text-ink-700/70 dark:text-ink-200/70">Pick a day and/or subject from the list — no typing needed.</p>
+        </div>
+
+        <form id="timetable-form" class="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 p-4 sm:p-6 shadow-soft space-y-5 sm:space-y-6">
+          <fieldset>
+            <legend class="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-3">What do you want?</legend>
+            <div class="choice-grid">
+              <label class="choice-chip">
+                <input type="radio" name="tt-mode" value="day" checked />
+                <span>Full day</span>
+              </label>
+              <label class="choice-chip">
+                <input type="radio" name="tt-mode" value="week" />
+                <span>Full week</span>
+              </label>
+              <label class="choice-chip">
+                <input type="radio" name="tt-mode" value="subject" />
+                <span>Find subject</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset id="tt-day-fieldset">
+            <legend class="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-3">Day</legend>
+            <div id="tt-day-options" class="day-chip-row" role="radiogroup" aria-label="Select day"></div>
+            <label id="tt-any-day-wrap" class="choice-chip mt-2 hidden" hidden>
+              <input type="radio" name="tt-day" value="any" />
+              <span>Whole week</span>
+            </label>
+          </fieldset>
+
+          <fieldset id="tt-subject-fieldset" class="hidden" hidden>
+            <legend class="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-3">Subject</legend>
+            <label for="tt-subject" class="sr-only">Subject</label>
+            <select id="tt-subject" class="touch-field w-full max-w-md rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500">
+              <option value="">Select a subject…</option>
+            </select>
+            <p class="mt-2 text-xs text-ink-700/50 dark:text-ink-200/50">Subjects come from your batch timetable (including elective splits).</p>
+          </fieldset>
+
+          <div class="flex flex-col-reverse sm:flex-row flex-wrap gap-2">
+            <button type="button" id="tt-reset" class="w-full sm:w-auto rounded-xl border border-ink-200 dark:border-ink-700 px-5 py-3.5 sm:py-3 font-medium text-ink-800 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-12">
+              Reset
+            </button>
+            <button type="submit" class="btn-primary w-full sm:w-auto rounded-xl bg-leaf-600 px-6 py-3.5 sm:py-3 font-semibold text-white hover:bg-leaf-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 focus:ring-offset-2 dark:focus:ring-offset-ink-800 min-h-12">
+              Show schedule
+            </button>
+          </div>
+        </form>
+
+        <div id="tt-results" class="mt-5 sm:mt-6 hidden" hidden aria-live="polite">
+          <h3 id="tt-results-title" class="text-base sm:text-lg font-semibold text-ink-900 dark:text-white mb-3"></h3>
+          <ul id="tt-results-list" class="tt-results-list space-y-2"></ul>
+          <p id="tt-results-empty" class="hidden rounded-2xl border border-dashed border-ink-200 dark:border-ink-700 bg-white/60 dark:bg-ink-800/40 px-4 sm:px-6 py-8 text-center text-ink-700/70 dark:text-ink-200/70"></p>
+        </div>
+      </section>
+
+      <!-- Feedback panel -->
+      <section id="panel-feedback" role="tabpanel" aria-labelledby="tab-feedback" class="tab-panel hidden" hidden>
+        <div class="mb-4 sm:mb-6">
+          <h2 class="font-display text-xl sm:text-2xl font-semibold text-ink-900 dark:text-white">Anonymous Feedback Forum</h2>
+          <p class="mt-1 text-sm sm:text-base text-ink-700/70 dark:text-ink-200/70">Share ideas without names or login. The feed is staff-only — unlock with the staff password to view posts.</p>
+        </div>
+
+        <form id="feedback-form" class="rounded-2xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 p-4 sm:p-6 shadow-soft mb-6 sm:mb-8">
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-1">
+              <label for="feedback-category" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Category</label>
+              <select id="feedback-category" required class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500">
+                <option value="">Select a category…</option>
+                <option value="Facilities">Facilities</option>
+                <option value="Academics">Academics</option>
+                <option value="General">General</option>
+                <option value="Cafeteria">Cafeteria</option>
+                <option value="Transport">Transport</option>
+              </select>
+            </div>
+            <div class="sm:col-span-2">
+              <label for="feedback-message" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Your message</label>
+              <textarea id="feedback-message" required rows="4" maxlength="800" placeholder="Write your feedback…" class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500 resize-y min-h-[120px]"></textarea>
+              <p class="mt-1 text-xs text-ink-700/50 dark:text-ink-200/50">Posts are anonymous. Do not include personal details. Only staff can read the feed.</p>
+            </div>
+          </div>
+          <div class="mt-4 flex justify-stretch sm:justify-end">
+            <button type="submit" class="btn-primary w-full sm:w-auto rounded-xl bg-leaf-600 px-6 py-3.5 sm:py-3 font-semibold text-white hover:bg-leaf-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 focus:ring-offset-2 dark:focus:ring-offset-ink-900 min-h-12">
+              Submit anonymously
+            </button>
+          </div>
+        </form>
+
+        <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center justify-between gap-2 sm:gap-3 mb-3">
+          <h3 class="text-base sm:text-lg font-semibold text-ink-900 dark:text-white">Staff feed</h3>
+          <button type="button" id="unlock-feed-btn" class="w-full sm:w-auto rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-800 px-3 py-2.5 text-sm font-medium text-ink-700 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-11">
+            Unlock with staff password
+          </button>
+        </div>
+
+        <div id="feedback-locked" class="rounded-2xl border border-dashed border-ink-200 dark:border-ink-700 bg-white/60 dark:bg-ink-800/40 px-6 py-10 text-center">
+          <p class="text-ink-700/80 dark:text-ink-200/80 font-medium">Feedback is hidden from students.</p>
+          <p class="mt-1 text-sm text-ink-700/60 dark:text-ink-200/60">Teachers and staff can unlock this feed with the staff password.</p>
+        </div>
+
+        <div id="feedback-unlocked" class="hidden" hidden>
+          <div id="feedback-feed" class="space-y-3" aria-live="polite"></div>
+          <p id="feedback-empty" class="hidden rounded-2xl border border-dashed border-ink-200 dark:border-ink-700 bg-white/60 dark:bg-ink-800/40 px-6 py-10 text-center text-ink-700/70 dark:text-ink-200/70">
+            No feedback yet — be the first to post.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-ink-200 dark:border-ink-700 py-4 pb-safe text-center text-xs sm:text-sm text-ink-700/50 dark:text-ink-200/50 px-4">
+      Campus Hub · Preferences stored only on this device
+    </footer>
+  </div>
+
+  <!-- Staff password gate -->
+  <div id="auth-modal" class="fixed inset-0 z-50 hidden modal-root" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" hidden>
+    <div class="absolute inset-0 bg-ink-900/40 dark:bg-black/60 backdrop-blur-sm modal-backdrop" data-close-auth></div>
+    <div class="modal-panel relative mx-auto w-[calc(100%-1.5rem)] max-w-sm rounded-2xl bg-white dark:bg-ink-800 shadow-soft p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-3 mb-4">
+        <div>
+          <h2 id="auth-modal-title" class="font-display text-xl font-semibold text-ink-900 dark:text-white">Staff password</h2>
+          <p id="auth-modal-desc" class="text-sm text-ink-700/70 dark:text-ink-200/70 mt-1">Enter the staff password to continue.</p>
+        </div>
+        <button type="button" class="rounded-lg p-2.5 text-ink-700/60 dark:text-ink-200/60 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-11 min-w-11" data-close-auth aria-label="Close dialog">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
+        </button>
+      </div>
+      <form id="auth-form" class="space-y-4">
+        <div>
+          <label for="staff-password" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Password</label>
+          <input id="staff-password" type="password" required autocomplete="current-password" class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500" />
+          <p id="auth-error" class="hidden mt-2 text-sm text-coral-600" role="alert">Incorrect password. Try again.</p>
+        </div>
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-2">
+          <button type="button" data-close-auth class="w-full sm:w-auto rounded-xl border border-ink-200 dark:border-ink-700 px-4 py-3 font-medium text-ink-800 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-12">Cancel</button>
+          <button type="submit" class="btn-primary w-full sm:w-auto rounded-xl bg-leaf-600 px-5 py-3 font-semibold text-white hover:bg-leaf-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 focus:ring-offset-2 dark:focus:ring-offset-ink-800 min-h-12">Unlock</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Staff: publish absence modal -->
+  <div id="admin-modal" class="fixed inset-0 z-50 hidden modal-root" role="dialog" aria-modal="true" aria-labelledby="admin-modal-title" hidden>
+    <div class="absolute inset-0 bg-ink-900/40 dark:bg-black/60 backdrop-blur-sm modal-backdrop" data-close-modal></div>
+    <div class="modal-panel modal-panel--tall relative mx-auto w-[calc(100%-1.5rem)] max-w-lg rounded-2xl bg-white dark:bg-ink-800 shadow-soft p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-3 mb-5">
+        <div>
+          <h2 id="admin-modal-title" class="font-display text-xl font-semibold text-ink-900 dark:text-white">Publish absence notice</h2>
+          <p class="text-sm text-ink-700/70 dark:text-ink-200/70 mt-1">Staff only — posts appear for the selected batch.</p>
+        </div>
+        <button type="button" class="rounded-lg p-2.5 text-ink-700/60 dark:text-ink-200/60 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-11 min-w-11" data-close-modal aria-label="Close dialog">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
+        </button>
+      </div>
+      <form id="absence-form" class="space-y-4">
+        <div>
+          <label for="abs-teacher" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Teacher name</label>
+          <input id="abs-teacher" required class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500" />
+        </div>
+        <div>
+          <label for="abs-subject" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Subject</label>
+          <input id="abs-subject" required class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500" />
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label for="abs-batch" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Affected batch</label>
+            <select id="abs-batch" required class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500"></select>
+          </div>
+          <div>
+            <label for="abs-date" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Date</label>
+            <input id="abs-date" type="date" required class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500" />
+          </div>
+        </div>
+        <div>
+          <label for="abs-cover" class="block text-sm font-semibold text-ink-800 dark:text-ink-100 mb-1.5">Cover / instructions <span class="font-normal text-ink-700/50 dark:text-ink-200/50">(optional)</span></label>
+          <textarea id="abs-cover" rows="2" class="touch-field w-full rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 px-4 py-3 text-ink-800 dark:text-ink-100 focus:outline-none focus:ring-2 focus:ring-leaf-500 resize-y"></textarea>
+        </div>
+        <div class="flex items-center gap-2 min-h-11">
+          <input id="abs-urgent" type="checkbox" class="h-5 w-5 rounded border-ink-300 text-leaf-600 focus:ring-leaf-500" />
+          <label for="abs-urgent" class="text-sm font-medium text-ink-800 dark:text-ink-100">Mark as urgent (show top banner)</label>
+        </div>
+        <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+          <button type="button" data-close-modal class="w-full sm:w-auto rounded-xl border border-ink-200 dark:border-ink-700 px-4 py-3 font-medium text-ink-800 dark:text-ink-100 hover:bg-ink-50 dark:hover:bg-ink-700 focus:outline-none focus:ring-2 focus:ring-leaf-500 min-h-12">Cancel</button>
+          <button type="submit" class="w-full sm:w-auto rounded-xl bg-coral-500 px-5 py-3 font-semibold text-white hover:bg-coral-600 focus:outline-none focus:ring-2 focus:ring-coral-500 focus:ring-offset-2 dark:focus:ring-offset-ink-800 min-h-12">Publish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-[60] hidden max-w-[calc(100%-2rem)] rounded-xl bg-ink-900 dark:bg-ink-100 px-4 py-2.5 text-sm font-medium text-white dark:text-ink-900 shadow-soft" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

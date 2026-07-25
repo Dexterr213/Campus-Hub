@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "name": "A Level (2nd Batch)",
+    "openDate": "2025-07-22",
+    "source": "Official weekly timetable"
+  },
+  "A Level Batch 2": {
+    "Monday": [
+      { "time": "08:00 - 09:30", "subject": "Mechanics", "room": "", "teacher": "" },
+      { "time": "09:30 - 11:00", "subject": "Statistics", "room": "", "teacher": "" },
+      { "time": "11:00 - 12:30", "subject": "IT", "room": "", "teacher": "" },
+      { "time": "12:30 - 13:00", "subject": "Lunch", "room": "", "teacher": "" }
+    ],
+    "Tuesday": [
+      { "time": "08:00 - 09:30", "subject": "Chem / Decision Math", "room": "", "teacher": "" },
+      { "time": "09:30 - 11:00", "subject": "Chem / Eco", "room": "", "teacher": "" },
+      { "time": "11:00 - 12:30", "subject": "Physics", "room": "", "teacher": "" },
+      { "time": "12:30 - 13:00", "subject": "Lunch", "room": "", "teacher": "" },
+      { "time": "13:00 - 14:30", "subject": "Business / Bio / IT", "room": "", "teacher": "" },
+      { "time": "14:30 - 16:00", "subject": "Statistics", "room": "", "teacher": "" }
+    ],
+    "Wednesday": [
+      { "time": "08:00 - 09:30", "subject": "Further Math", "room": "", "teacher": "" },
+      { "time": "09:30 - 11:00", "subject": "Physics / Business", "room": "", "teacher": "" },
+      { "time": "11:00 - 12:30", "subject": "Chemistry", "room": "", "teacher": "" },
+      { "time": "12:30 - 13:00", "subject": "Lunch", "room": "", "teacher": "" },
+      { "time": "13:00 - 14:30", "subject": "University Councelling", "room": "", "teacher": "" },
+      { "time": "14:30 - 16:00", "subject": "IT", "room": "Practical", "teacher": "" }
+    ],
+    "Thursday": [
+      { "time": "08:00 - 09:30", "subject": "Accounting / Decision Math", "room": "", "teacher": "" },
+      { "time": "09:30 - 11:00", "subject": "Accounting / Bio / IT", "room": "Bio Lab / IT Practical", "teacher": "" },
+      { "time": "11:00 - 12:30", "subject": "University Councelling", "room": "", "teacher": "" },
+      { "time": "12:30 - 13:00", "subject": "Lunch", "room": "", "teacher": "" },
+      { "time": "13:00 - 14:30", "subject": "Mechanics / Bio", "room": "", "teacher": "" },
+      { "time": "14:30 - 16:00", "subject": "Pure Maths", "room": "", "teacher": "Sr. Hpone San / Tr. Sandi" }
+    ],
+    "Friday": [
+      { "time": "08:00 - 09:30", "subject": "Pure Maths", "room": "", "teacher": "Tr. Sandi" },
+      { "time": "09:30 - 11:00", "subject": "Further Math", "room": "", "teacher": "" },
+      { "time": "11:00 - 12:30", "subject": "Further Math", "room": "", "teacher": "" },
+      { "time": "12:30 - 13:00", "subject": "Lunch", "room": "", "teacher": "" },
+      { "time": "13:00 - 14:30", "subject": "Pure Maths", "room": "", "teacher": "Sr. Hpone San" },
+      { "time": "14:30 - 16:00", "subject": "SAT (Math)", "room": "", "teacher": "" }
+    ]
+  },
+  "Batch A": {
+    "Monday": [],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": []
+  },
+  "Batch B": {
+    "Monday": [],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": []
+  },
+  "Grade 10": {
+    "Monday": [],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": []
+  },
+  "Grade 11": {
+    "Monday": [],
+    "Tuesday": [],
+    "Wednesday": [],
+    "Thursday": [],
+    "Friday": []
+  }
+}
