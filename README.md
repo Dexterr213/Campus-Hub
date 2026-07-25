@@ -1,6 +1,8 @@
-# Campus Hub — School Portal
+# Ascend Dashboard (Campus Hub)
 
-Responsive student dashboard (HTML + Tailwind + JS) with **Supabase** for shared absences/feedback and **Vercel** for hosting.
+Dashboard for AIS students — timetable assistant, teacher absence announcements, and anonymous feedback.
+
+Built with HTML, Tailwind, and JavaScript. Optional **Supabase** for shared live data and **Vercel** for hosting.
 
 ## What syncs school-wide
 
@@ -30,16 +32,10 @@ When configured, the header shows **● Live sync on**.
 
 ## 2. Deploy to Vercel (share one link)
 
-1. Push this folder to a GitHub repo  
-2. Go to [vercel.com](https://vercel.com) → **Add New Project** → import that repo  
+1. Push this folder to GitHub (`Dexterr213/Ascend-Dashboard`)  
+2. In Vercel, import that repo (or reconnect if the project already exists)  
 3. Deploy (no build command needed — static site)  
 4. Share the Vercel URL with your school  
-
-Or CLI:
-
-```bash
-npx vercel
-```
 
 ## 3. Staff password
 
