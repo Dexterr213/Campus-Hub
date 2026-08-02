@@ -28,7 +28,7 @@ import {
   formatRelativeTime,
   subscribeFeedback
 } from './feedback.js';
-import { STAFF_PASSWORD, STAFF_SESSION_KEY } from './config.js';
+import { STAFF_PASSWORD, STAFF_SESSION_KEY, DISCORD_WEBHOOK_URL } from './config.js';
 import { cloudEnabled } from './db.js';
 import {
   enableNotifications,
@@ -650,14 +650,16 @@ function setupAdminModal() {
       return;
     }
     try {
-      await publishAbsence({
-        teacher: document.getElementById('abs-teacher').value,
-        subject: document.getElementById('abs-subject').value,
-        batch: document.getElementById('abs-batch').value,
-        date: document.getElementById('abs-date').value,
-        cover: document.getElementById('abs-cover').value,
-        urgent: document.getElementById('abs-urgent').checked
-      });
+      const teacher = document.getElementById('abs-teacher').value;
+      const subject = document.getElementById('abs-subject').value;
+      const batch = document.getElementById('abs-batch').value;
+      const date = document.getElementById('abs-date').value;
+      const cover = document.getElementById('abs-cover').value;
+      const urgent = document.getElementById('abs-urgent').checked;
+
+      await publishAbsence({ teacher, subject, batch, date, cover, urgent });
+      // Fire-and-forget so Discord downtime never blocks publishing
+      void triggerDiscordAlert({ teacher, subject, batch, date, notes: cover, urgent });
       closeAdminModal();
       els.absenceForm.reset();
       showToast(cloudEnabled ? 'Published for everyone' : 'Saved on this device only');
@@ -1017,4 +1019,44 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/* —— Discord webhook alert —— */
+
+async function triggerDiscordAlert({ teacher, subject, batch, date, notes, urgent }) {
+  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('YOUR_DISCORD_WEBHOOK')) return;
+
+  const noteText = String(notes || '').trim() || 'No additional notes provided.';
+  const payload = {
+    username: 'Campus Hub Alerts',
+    avatar_url: 'https://ascend-dashboard-six.vercel.app/favicon.ico',
+    content: urgent
+      ? '@everyone 🚨 **Urgent Teacher Absence Alert**'
+      : '@everyone 📢 **New Teacher Absence Alert**',
+    embeds: [
+      {
+        title: `Teacher Absence: ${teacher}`,
+        description: `A new absence notice has been published for **${batch}**.`,
+        color: urgent ? 15548997 : 5763719,
+        fields: [
+          { name: 'Subject', value: String(subject || '—'), inline: true },
+          { name: 'Batch', value: String(batch), inline: true },
+          { name: 'Date', value: String(date), inline: true },
+          { name: 'Notes / Details', value: noteText }
+        ],
+        footer: { text: 'Campus Hub • Ascend Dashboard' },
+        timestamp: new Date().toISOString()
+      }
+    ]
+  };
+
+  try {
+    await fetch(DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error('Failed to post alert to Discord:', err);
+  }
 }
