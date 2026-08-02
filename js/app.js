@@ -1018,3 +1018,45 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
+
+
+
+//Adding the Discord Bot announcment thing 
+
+const DISCORD_WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"; // Paste your copied URL here
+
+async function triggerDiscordAlert(teacher, batch, date, notes) {
+  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL === "YOUR_DISCORD_WEBHOOK_URL_HERE") return;
+
+  const payload = {
+    username: "Campus Hub Alerts",
+    avatar_url: "https://ascend-dashboard-six.vercel.app/favicon.ico",
+    content: "@everyone 🚨 **New Teacher Absence Alert**",
+    embeds: [
+      {
+        title: `Teacher Absence: ${teacher}`,
+        description: `A new absence notice has been published for **Batch ${batch}**.`,
+        color: 15548997, // High-contrast Red accent
+        fields: [
+          { name: "Batch", value: batch, inline: true },
+          { name: "Date", value: date, inline: true },
+          { name: "Notes / Details", value: notes || "No additional notes provided." }
+        ],
+        footer: {
+          text: "Campus Hub • Ascend Dashboard"
+        },
+        timestamp: new Date().toISOString()
+      }
+    ]
+  };
+
+  try {
+    await fetch(DISCORD_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (err) {
+    console.error("Failed to post alert to Discord:", err);
+  }
+}
