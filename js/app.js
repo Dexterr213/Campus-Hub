@@ -650,6 +650,46 @@ function setupAdminModal() {
       return;
     }
     try {
+      // 1. Get values from the inputs
+      const teacher = document.getElementById('abs-teacher').value;
+      const subject = document.getElementById('abs-subject').value;
+      const batch = document.getElementById('abs-batch').value;
+      const date = document.getElementById('abs-date').value;
+      const cover = document.getElementById('abs-cover').value;
+      const urgent = document.getElementById('abs-urgent').checked;
+
+      // 2. Publish to Supabase
+      await publishAbsence({
+        teacher,
+        subject,
+        batch,
+        date,
+        cover,
+        urgent
+      });
+
+      // 🚨 ADD THIS LINE RIGHT HERE:
+      triggerDiscordAlert(teacher, batch, date, cover);
+
+      closeAdminModal();
+      els.absenceForm.reset();
+      showToast(cloudEnabled ? 'Published for everyone' : 'Saved on this device only');
+      if (currentBatch) renderAbsences();
+    } catch (err) {
+      console.error(err);
+      showToast('Publish failed — check Supabase setup');
+    }
+  });
+}
+
+  els.absenceForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!isStaffUnlocked()) {
+      showToast('Staff password required');
+      requireStaff('publish', 'Enter the staff password to publish absence notices.');
+      return;
+    }
+    try {
       await publishAbsence({
         teacher: document.getElementById('abs-teacher').value,
         subject: document.getElementById('abs-subject').value,
@@ -1021,11 +1061,12 @@ function escapeHtml(str) {
 
 
 
-//Adding the Discord Bot announcment thing 
+// Adding the Discord Bot announcement function
 
-const DISCORD_WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE"; // Paste your copied URL here
+const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1533518199109451897/MMJrHFTN4orWUBqyWKauPj_kIZFISARFa6wIHsTfRR8eHtgauVslbBhQ9NOt_9HCaL_j"; 
 
 async function triggerDiscordAlert(teacher, batch, date, notes) {
+  // Check if webhook URL exists
   if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL === "YOUR_DISCORD_WEBHOOK_URL_HERE") return;
 
   const payload = {
@@ -1036,10 +1077,10 @@ async function triggerDiscordAlert(teacher, batch, date, notes) {
       {
         title: `Teacher Absence: ${teacher}`,
         description: `A new absence notice has been published for **Batch ${batch}**.`,
-        color: 15548997, // High-contrast Red accent
+        color: 15548997,
         fields: [
-          { name: "Batch", value: batch, inline: true },
-          { name: "Date", value: date, inline: true },
+          { name: "Batch", value: String(batch), inline: true },
+          { name: "Date", value: String(date), inline: true },
           { name: "Notes / Details", value: notes || "No additional notes provided." }
         ],
         footer: {
