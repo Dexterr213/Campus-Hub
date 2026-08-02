@@ -28,7 +28,7 @@ import {
   formatRelativeTime,
   subscribeFeedback
 } from './feedback.js';
-import { STAFF_PASSWORD, STAFF_SESSION_KEY, DISCORD_WEBHOOK_URL } from './config.js';
+import { STAFF_SESSION_KEY } from './config.js';
 import { cloudEnabled } from './db.js';
 import {
   enableNotifications,
@@ -100,10 +100,16 @@ let toastTimer = null;
 let pendingAuthAction = null;
 let unsubAbsences = null;
 let unsubFeedback = null;
+/** Staff password kept in memory only after /api/verify-staff succeeds. */
+let staffPasswordSession = '';
 
 init();
 
 async function init() {
+  // Password is memory-only; clear stale unlock flags after refresh
+  if (sessionStorage.getItem(STAFF_SESSION_KEY) === '1' && !staffPasswordSession) {
+    sessionStorage.removeItem(STAFF_SESSION_KEY);
+  }
   setupTheme();
   seedDemoAbsencesIfEmpty(BATCHES);
   updateCloudBadge();
@@ -272,12 +278,17 @@ function applyTheme(theme) {
 /* —— Staff auth —— */
 
 function isStaffUnlocked() {
-  return sessionStorage.getItem(STAFF_SESSION_KEY) === '1';
+  return sessionStorage.getItem(STAFF_SESSION_KEY) === '1' && Boolean(staffPasswordSession);
 }
 
-function setStaffUnlocked(on) {
-  if (on) sessionStorage.setItem(STAFF_SESSION_KEY, '1');
-  else sessionStorage.removeItem(STAFF_SESSION_KEY);
+function setStaffUnlocked(on, password = '') {
+  if (on) {
+    sessionStorage.setItem(STAFF_SESSION_KEY, '1');
+    staffPasswordSession = password;
+  } else {
+    sessionStorage.removeItem(STAFF_SESSION_KEY);
+    staffPasswordSession = '';
+  }
   updateStaffUi();
   updateFeedbackGate();
 }
@@ -295,20 +306,40 @@ function updateStaffUi() {
 }
 
 function setupAuth() {
-  els.authForm.addEventListener('submit', (e) => {
+  els.authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const entered = els.staffPassword.value;
-    if (entered === STAFF_PASSWORD) {
-      setStaffUnlocked(true);
+    els.authError.classList.add('hidden');
+
+    try {
+      const res = await fetch('/api/verify-staff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: entered })
+      });
+
+      if (res.status === 401) {
+        els.authError.classList.remove('hidden');
+        els.staffPassword.select();
+        showToast('Invalid staff password');
+        return;
+      }
+
+      if (!res.ok) {
+        showToast('Could not verify staff password (server error)');
+        return;
+      }
+
+      setStaffUnlocked(true, entered);
       closeAuthModal();
       showToast('Staff access unlocked');
       const action = pendingAuthAction;
       pendingAuthAction = null;
       if (action === 'publish') openAdminModal();
       if (action === 'feedback') updateFeedbackGate();
-    } else {
-      els.authError.classList.remove('hidden');
-      els.staffPassword.select();
+    } catch (err) {
+      console.error(err);
+      showToast('Staff verify failed — use the Vercel site URL');
     }
   });
 
@@ -644,7 +675,7 @@ function setupAdminModal() {
 
   els.absenceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!isStaffUnlocked()) {
+    if (!isStaffUnlocked() || !staffPasswordSession) {
       showToast('Staff password required');
       requireStaff('publish', 'Enter the staff password to publish absence notices.');
       return;
@@ -657,16 +688,29 @@ function setupAdminModal() {
       const cover = document.getElementById('abs-cover').value;
       const urgent = document.getElementById('abs-urgent').checked;
 
-      await publishAbsence({ teacher, subject, batch, date, cover, urgent });
-      // Fire-and-forget so Discord downtime never blocks publishing
-      void triggerDiscordAlert({ teacher, subject, batch, date, notes: cover, urgent });
+      await publishAbsence({
+        password: staffPasswordSession,
+        teacher,
+        subject,
+        batch,
+        date,
+        cover,
+        urgent
+      });
+      await triggerDiscordAlert({ teacher, subject, batch, date, notes: cover, urgent });
       closeAdminModal();
       els.absenceForm.reset();
-      showToast(cloudEnabled ? 'Published for everyone' : 'Saved on this device only');
+      showToast('Published for everyone');
       if (currentBatch) renderAbsences();
     } catch (err) {
       console.error(err);
-      showToast('Publish failed — check Supabase setup');
+      if (err?.code === 'UNAUTHORIZED') {
+        setStaffUnlocked(false);
+        showToast('Invalid staff password');
+        requireStaff('publish', 'Enter the staff password to publish absence notices.');
+        return;
+      }
+      showToast(err?.message || 'Publish failed — check Vercel env / Supabase');
     }
   });
 }
@@ -1021,42 +1065,22 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-/* —— Discord webhook alert —— */
+/* —— Discord alert via Vercel serverless (webhook stays on server) —— */
 
 async function triggerDiscordAlert({ teacher, subject, batch, date, notes, urgent }) {
-  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes('YOUR_DISCORD_WEBHOOK')) return;
-
-  const noteText = String(notes || '').trim() || 'No additional notes provided.';
-  const payload = {
-    username: 'Campus Hub Alerts',
-    avatar_url: 'https://ascend-dashboard-six.vercel.app/favicon.ico',
-    content: urgent
-      ? '@everyone 🚨 **Urgent Teacher Absence Alert**'
-      : '@everyone 📢 **New Teacher Absence Alert**',
-    embeds: [
-      {
-        title: `Teacher Absence: ${teacher}`,
-        description: `A new absence notice has been published for **${batch}**.`,
-        color: urgent ? 15548997 : 5763719,
-        fields: [
-          { name: 'Subject', value: String(subject || '—'), inline: true },
-          { name: 'Batch', value: String(batch), inline: true },
-          { name: 'Date', value: String(date), inline: true },
-          { name: 'Notes / Details', value: noteText }
-        ],
-        footer: { text: 'Campus Hub • Ascend Dashboard' },
-        timestamp: new Date().toISOString()
-      }
-    ]
-  };
-
   try {
-    await fetch(DISCORD_WEBHOOK_URL, {
+    const res = await fetch('/api/discord-alert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ teacher, subject, batch, date, notes, urgent })
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      console.error('Discord alert API failed', data);
+      showToast('Published, but Discord alert failed');
+    }
   } catch (err) {
     console.error('Failed to post alert to Discord:', err);
+    showToast('Published, but Discord alert failed');
   }
 }

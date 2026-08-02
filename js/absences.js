@@ -47,36 +47,49 @@ export async function getUrgentForBatch(batch, todayISO = toISODate(new Date()))
   return items.filter((a) => a.urgent && a.date === todayISO);
 }
 
-export async function publishAbsence({ teacher, subject, batch, date, cover, urgent }) {
-  const payload = {
-    teacher: teacher.trim(),
-    subject: subject.trim(),
-    batch,
-    absence_date: date,
-    cover: (cover || '').trim(),
-    urgent: Boolean(urgent)
-  };
+export async function publishAbsence({
+  password,
+  teacher,
+  subject,
+  batch,
+  date,
+  cover,
+  urgent
+}) {
+  const res = await fetch('/api/publish-absence', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      password,
+      teacher: String(teacher || '').trim(),
+      subject: String(subject || '').trim(),
+      batch,
+      date,
+      cover: String(cover || '').trim(),
+      urgent: Boolean(urgent)
+    })
+  });
 
-  if (!cloudEnabled) {
-    const entry = {
-      id: uid('abs'),
-      teacher: payload.teacher,
-      subject: payload.subject,
-      batch: payload.batch,
-      date: payload.absence_date,
-      cover: payload.cover,
-      urgent: payload.urgent,
-      createdAt: new Date().toISOString()
-    };
-    const list = loadAbsences();
-    list.unshift(entry);
-    saveAbsences(list);
-    return entry;
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
   }
 
-  const { data, error } = await supabase.from('absences').insert(payload).select().single();
-  if (error) throw error;
-  return mapRow(data);
+  if (res.status === 401) {
+    const err = new Error(data?.error || 'Unauthorized');
+    err.code = 'UNAUTHORIZED';
+    throw err;
+  }
+
+  if (!res.ok) {
+    const err = new Error(data?.error || 'Failed to publish absence');
+    err.code = 'PUBLISH_FAILED';
+    throw err;
+  }
+
+  return data?.absence || null;
 }
 
 export function formatAbsenceLine(a) {
