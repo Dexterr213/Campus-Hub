@@ -1,13 +1,11 @@
 /**
- * Campus Hub — main app: batch selection, tabs, absences, chat, feedback, auth, theme.
+ * Campus Hub — main app: batch selection, tabs, absences, timetable, auth.
  */
 
 import {
   getSelectedBatch,
   setSelectedBatch,
-  clearSelectedBatch,
-  getTheme,
-  setTheme
+  clearSelectedBatch
 } from './storage.js';
 import {
   getAbsencesForBatch,
@@ -20,14 +18,6 @@ import {
   subscribeAbsences
 } from './absences.js';
 import { createTimetableAssistant } from './chatbot.js';
-import {
-  listFeedback,
-  submitFeedback,
-  upvoteFeedback,
-  flagFeedback,
-  formatRelativeTime,
-  subscribeFeedback
-} from './feedback.js';
 import { STAFF_SESSION_KEY } from './config.js';
 import { cloudEnabled } from './db.js';
 import {
@@ -61,20 +51,11 @@ const els = {
   timetableForm: document.getElementById('timetable-form'),
   ttDayOptions: document.getElementById('tt-day-options'),
   ttDayFieldset: document.getElementById('tt-day-fieldset'),
-  ttAnyDayWrap: document.getElementById('tt-any-day-wrap'),
-  ttSubjectFieldset: document.getElementById('tt-subject-fieldset'),
-  ttSubject: document.getElementById('tt-subject'),
   ttReset: document.getElementById('tt-reset'),
   ttResults: document.getElementById('tt-results'),
   ttResultsTitle: document.getElementById('tt-results-title'),
   ttResultsList: document.getElementById('tt-results-list'),
   ttResultsEmpty: document.getElementById('tt-results-empty'),
-  feedbackForm: document.getElementById('feedback-form'),
-  feedbackFeed: document.getElementById('feedback-feed'),
-  feedbackEmpty: document.getElementById('feedback-empty'),
-  feedbackLocked: document.getElementById('feedback-locked'),
-  feedbackUnlocked: document.getElementById('feedback-unlocked'),
-  unlockFeedBtn: document.getElementById('unlock-feed-btn'),
   adminBtn: document.getElementById('admin-toggle-btn'),
   staffLockBtn: document.getElementById('staff-lock-btn'),
   adminModal: document.getElementById('admin-modal'),
@@ -86,9 +67,7 @@ const els = {
   absenceForm: document.getElementById('absence-form'),
   absBatch: document.getElementById('abs-batch'),
   absDate: document.getElementById('abs-date'),
-  toast: document.getElementById('toast'),
-  themeToggle: document.getElementById('theme-toggle'),
-  themeToggleLanding: document.getElementById('theme-toggle-landing')
+  toast: document.getElementById('toast')
 };
 
 let selectedDraft = '';
@@ -96,10 +75,9 @@ let currentBatch = '';
 let timetables = {};
 let bot = null;
 let toastTimer = null;
-/** @type {null | 'publish' | 'feedback'} */
+/** @type {null | 'publish'} */
 let pendingAuthAction = null;
 let unsubAbsences = null;
-let unsubFeedback = null;
 /** Staff password kept in memory only after /api/verify-staff succeeds. */
 let staffPasswordSession = '';
 
@@ -110,7 +88,6 @@ async function init() {
   if (sessionStorage.getItem(STAFF_SESSION_KEY) === '1' && !staffPasswordSession) {
     sessionStorage.removeItem(STAFF_SESSION_KEY);
   }
-  setupTheme();
   seedDemoAbsencesIfEmpty(BATCHES);
   updateCloudBadge();
   await loadTimetables();
@@ -119,7 +96,6 @@ async function init() {
   setupAuth();
   setupAdminModal();
   setupTimetableAssistant();
-  setupFeedback();
   setupLiveSync();
   setupFlashyFx();
   setupNotifyUi();
@@ -152,12 +128,8 @@ function updateCloudBadge() {
 
 function setupLiveSync() {
   if (unsubAbsences) unsubAbsences();
-  if (unsubFeedback) unsubFeedback();
   unsubAbsences = subscribeAbsences((payload) => {
     if (currentBatch) renderAbsences({ fromRealtime: true, payload });
-  });
-  unsubFeedback = subscribeFeedback(() => {
-    if (isStaffUnlocked()) renderFeedback();
   });
 }
 
@@ -239,42 +211,6 @@ async function loadTimetables() {
   }
 }
 
-/* —— Theme —— */
-
-function setupTheme() {
-  const saved = getTheme();
-  if (saved === 'dark' || saved === 'light') {
-    applyTheme(saved);
-  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    applyTheme('dark');
-  } else {
-    applyTheme('light');
-  }
-
-  const toggle = (e) => {
-    const btn = e.currentTarget;
-    btn.classList.remove('is-spinning');
-    void btn.offsetWidth;
-    btn.classList.add('is-spinning');
-    const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
-    applyTheme(next);
-    setTheme(next);
-  };
-
-  els.themeToggle?.addEventListener('click', toggle);
-  els.themeToggleLanding?.addEventListener('click', toggle);
-}
-
-function applyTheme(theme) {
-  document.documentElement.classList.toggle('dark', theme === 'dark');
-  const label = theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
-  [els.themeToggle, els.themeToggleLanding].forEach((btn) => {
-    if (!btn) return;
-    btn.setAttribute('aria-label', label);
-    btn.title = label;
-  });
-}
-
 /* —— Staff auth —— */
 
 function isStaffUnlocked() {
@@ -290,18 +226,12 @@ function setStaffUnlocked(on, password = '') {
     staffPasswordSession = '';
   }
   updateStaffUi();
-  updateFeedbackGate();
 }
 
 function updateStaffUi() {
   const unlocked = isStaffUnlocked();
   if (els.staffLockBtn) {
     els.staffLockBtn.classList.toggle('hidden', !unlocked);
-  }
-  if (els.unlockFeedBtn) {
-    els.unlockFeedBtn.textContent = unlocked ? 'Staff unlocked' : 'Unlock with staff password';
-    els.unlockFeedBtn.disabled = unlocked;
-    els.unlockFeedBtn.classList.toggle('opacity-60', unlocked);
   }
 }
 
@@ -336,7 +266,6 @@ function setupAuth() {
       const action = pendingAuthAction;
       pendingAuthAction = null;
       if (action === 'publish') openAdminModal();
-      if (action === 'feedback') updateFeedbackGate();
     } catch (err) {
       console.error(err);
       showToast('Staff verify failed — use the Vercel site URL');
@@ -355,11 +284,6 @@ function setupAuth() {
     showToast('Staff session locked');
   });
 
-  els.unlockFeedBtn?.addEventListener('click', () => {
-    if (isStaffUnlocked()) return;
-    requireStaff('feedback', 'Enter the staff password to view the feedback feed.');
-  });
-
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!els.authModal.hidden) {
@@ -374,7 +298,6 @@ function setupAuth() {
 function requireStaff(action, description) {
   if (isStaffUnlocked()) {
     if (action === 'publish') openAdminModal();
-    if (action === 'feedback') updateFeedbackGate();
     return;
   }
   pendingAuthAction = action;
@@ -393,19 +316,6 @@ function closeAuthModal() {
   els.authForm.reset();
 }
 
-function updateFeedbackGate() {
-  const unlocked = isStaffUnlocked();
-  if (els.feedbackLocked) {
-    els.feedbackLocked.classList.toggle('hidden', unlocked);
-    els.feedbackLocked.hidden = unlocked;
-  }
-  if (els.feedbackUnlocked) {
-    els.feedbackUnlocked.classList.toggle('hidden', !unlocked);
-    els.feedbackUnlocked.hidden = !unlocked;
-  }
-  if (unlocked) renderFeedback();
-}
-
 /* —— Batch landing —— */
 
 function setupBatchLanding() {
@@ -422,8 +332,8 @@ function setupBatchLanding() {
     card.innerHTML = `
       <div class="flex items-start justify-between gap-3">
         <div>
-          <span class="font-display text-lg font-semibold text-ink-900 dark:text-white">${escapeHtml(batch)}</span>
-          <span class="block mt-1 text-sm text-ink-700/65 dark:text-ink-200/65">Absences · timetable · feedback</span>
+          <span class="font-display text-lg font-semibold text-white">${escapeHtml(batch)}</span>
+          <span class="block mt-1 text-sm text-ascend-lavender/80">Absences · timetable</span>
         </div>
         <span class="batch-arrow" aria-hidden="true">→</span>
       </div>
@@ -468,7 +378,6 @@ function showLanding() {
   els.shell.hidden = true;
   els.landing.hidden = false;
   els.landing.classList.remove('landing-exit');
-  if (els.themeToggleLanding) els.themeToggleLanding.classList.remove('hidden');
   selectedDraft = '';
   els.batchContinue.disabled = true;
   els.batchSelect.value = '';
@@ -489,13 +398,11 @@ function enterApp(batch, opts = {}) {
     els.shell.classList.remove('is-entering');
     void els.shell.offsetWidth;
     els.shell.classList.add('is-entering');
-    if (els.themeToggleLanding) els.themeToggleLanding.classList.add('hidden');
     els.batchBadge.textContent = batch;
     bot = createTimetableAssistant(timetables, batch);
     refreshTimetableControls();
     clearTimetableResults();
     renderAbsences();
-    updateFeedbackGate();
     switchTab('absences');
     requestAnimationFrame(() => moveTabInk());
   };
@@ -565,7 +472,7 @@ function moveTabInk() {
 function renderAbsences(opts = {}) {
   if (!currentBatch || !els.absenceList) return;
   if (!opts.fromRealtime) {
-    els.absenceList.innerHTML = `<p class="text-sm text-ink-700/60 dark:text-ink-200/60 px-1">Loading alerts…</p>`;
+    els.absenceList.innerHTML = `<p class="text-sm text-ascend-lavender/70 px-1">Loading alerts…</p>`;
   }
 
   Promise.all([getAbsencesForBatch(currentBatch), getUrgentForBatch(currentBatch)])
@@ -579,9 +486,9 @@ function renderAbsences(opts = {}) {
       <div class="urgent-banner-inner mb-2 last:mb-0">
         <span class="text-lg" aria-hidden="true">⚠️</span>
         <div>
-          <p class="font-semibold text-coral-600 text-sm uppercase tracking-wide">Urgent cancellation</p>
-          <p class="text-ink-800 dark:text-ink-100 font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
-          ${a.cover ? `<p class="text-sm text-ink-700/75 dark:text-ink-200/75 mt-1">${escapeHtml(a.cover)}</p>` : ''}
+          <p class="font-semibold text-ascend-yellow text-sm uppercase tracking-wide">Urgent cancellation</p>
+          <p class="text-white font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
+          ${a.cover ? `<p class="text-sm text-ascend-lavender/80 mt-1">${escapeHtml(a.cover)}</p>` : ''}
         </div>
       </div>`
           )
@@ -603,12 +510,12 @@ function renderAbsences(opts = {}) {
           card.innerHTML = `
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 class="font-semibold text-ink-900 dark:text-white">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
-          <p class="text-sm text-ink-700/70 dark:text-ink-200/70 mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
+          <h3 class="font-semibold text-white">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
+          <p class="text-sm text-ascend-lavender/75 mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
         </div>
-        ${a.urgent ? '<span class="rounded-md bg-coral-500/10 px-2 py-0.5 text-xs font-bold text-coral-600">URGENT</span>' : ''}
+        ${a.urgent ? '<span class="rounded-full bg-white/10 border border-ascend-yellow/40 px-2.5 py-0.5 text-xs font-bold text-ascend-yellow">URGENT</span>' : ''}
       </div>
-      ${a.cover ? `<p class="mt-2 text-sm text-ink-700 dark:text-ink-200 border-t border-ink-100 dark:border-ink-700 pt-2">${escapeHtml(a.cover)}</p>` : ''}
+      ${a.cover ? `<p class="mt-2 text-sm text-ascend-lavender border-t border-white/10 pt-2">${escapeHtml(a.cover)}</p>` : ''}
     `;
           els.absenceList.appendChild(card);
         });
@@ -748,7 +655,6 @@ function setupTimetableAssistant() {
     if (dayRadio) dayRadio.checked = true;
     const today = els.timetableForm.querySelector('input[name="tt-day"][value="today"]');
     if (today) today.checked = true;
-    if (els.ttSubject) els.ttSubject.value = '';
     syncTimetableModeUi();
     clearTimetableResults();
   });
@@ -769,44 +675,16 @@ function refreshTimetableControls() {
     )
     .join('');
 
-  const subjects = bot.getSubjectChoices();
-  if (els.ttSubject) {
-    els.ttSubject.innerHTML =
-      '<option value="">Select a subject…</option>' +
-      subjects.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
-  }
-
   syncTimetableModeUi();
 }
 
 function syncTimetableModeUi() {
   const mode = els.timetableForm?.querySelector('input[name="tt-mode"]:checked')?.value || 'day';
-  const subjectMode = mode === 'subject';
-  const showDay = mode === 'day' || mode === 'subject';
+  const showDay = mode === 'day';
 
   if (els.ttDayFieldset) {
     els.ttDayFieldset.classList.toggle('hidden', !showDay);
     els.ttDayFieldset.hidden = !showDay;
-  }
-
-  if (els.ttSubjectFieldset) {
-    els.ttSubjectFieldset.classList.toggle('hidden', !subjectMode);
-    els.ttSubjectFieldset.hidden = !subjectMode;
-    if (els.ttSubject) els.ttSubject.required = subjectMode;
-  }
-
-  if (els.ttAnyDayWrap) {
-    els.ttAnyDayWrap.classList.toggle('hidden', !subjectMode);
-    els.ttAnyDayWrap.hidden = !subjectMode;
-  }
-
-  // If leaving subject mode while "any" was selected, fall back to today
-  if (!subjectMode) {
-    const any = els.timetableForm?.querySelector('input[name="tt-day"][value="any"]');
-    if (any?.checked) {
-      const today = els.timetableForm.querySelector('input[name="tt-day"][value="today"]');
-      if (today) today.checked = true;
-    }
   }
 }
 
@@ -814,15 +692,8 @@ function runTimetableQuery() {
   if (!bot) return;
   const mode = els.timetableForm.querySelector('input[name="tt-mode"]:checked')?.value || 'day';
   const dayValue = els.timetableForm.querySelector('input[name="tt-day"]:checked')?.value || 'today';
-  const subject = els.ttSubject?.value || '';
 
-  if (mode === 'subject' && !subject) {
-    showToast('Select a subject first');
-    els.ttSubject?.focus();
-    return;
-  }
-
-  const result = bot.query({ mode, dayValue, subject });
+  const result = bot.query({ mode, dayValue });
   renderTimetableResults(result);
 }
 
@@ -863,7 +734,7 @@ function renderTimetableResults(result) {
   const looksEmpty =
     result.empty ||
     !result.lines?.length ||
-    result.lines.every((l) => /no .+|enjoy the break|select a subject|no timetable/i.test(l));
+    result.lines.every((l) => /no .+|enjoy the break|no timetable/i.test(l));
 
   if (looksEmpty) {
     els.ttResultsEmpty.classList.remove('hidden');
@@ -890,100 +761,6 @@ function clearTimetableResults() {
   els.ttResultsTitle.textContent = '';
 }
 
-/* —— Feedback —— */
-
-function setupFeedback() {
-  els.feedbackForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const category = document.getElementById('feedback-category').value;
-    const message = document.getElementById('feedback-message').value;
-    if (!category || !message.trim()) return;
-    try {
-      await submitFeedback({ category, message });
-      els.feedbackForm.reset();
-      showToast(cloudEnabled ? 'Posted for staff to review' : 'Saved on this device only');
-      if (isStaffUnlocked()) renderFeedback();
-    } catch (err) {
-      console.error(err);
-      showToast('Submit failed — check Supabase setup');
-    }
-  });
-}
-
-function renderFeedback() {
-  if (!isStaffUnlocked()) return;
-  els.feedbackFeed.innerHTML = `<p class="text-sm text-ink-700/60 dark:text-ink-200/60">Loading feedback…</p>`;
-
-  listFeedback()
-    .then((items) => {
-      els.feedbackFeed.innerHTML = '';
-      if (!items.length) {
-        els.feedbackEmpty.classList.remove('hidden');
-        return;
-      }
-      els.feedbackEmpty.classList.add('hidden');
-
-      items.forEach((f) => {
-        const hueBg = document.documentElement.classList.contains('dark')
-          ? `hsl(${f.avatarHue} 35% 22%)`
-          : `hsl(${f.avatarHue} 45% 90%)`;
-        const card = document.createElement('article');
-        card.className = 'feedback-card';
-        card.innerHTML = `
-      <div class="flex gap-3">
-        <div class="avatar-badge" style="background: ${hueBg}" aria-hidden="true">${f.avatarEmoji}</div>
-        <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span class="font-semibold text-ink-900 dark:text-white">${escapeHtml(f.avatarLabel)}</span>
-            <span class="rounded-md bg-ink-100 dark:bg-ink-700 px-2 py-0.5 text-xs font-semibold text-ink-700 dark:text-ink-100">${escapeHtml(f.category)}</span>
-            <time class="text-xs text-ink-700/50 dark:text-ink-200/50" datetime="${escapeHtml(f.createdAt)}">${escapeHtml(formatRelativeTime(f.createdAt))}</time>
-          </div>
-          <p class="mt-2 text-ink-800 dark:text-ink-100 whitespace-pre-wrap">${escapeHtml(f.message)}</p>
-          <div class="mt-3 flex flex-wrap gap-2">
-            <button type="button" class="action-btn${f.votedLocal ? ' active' : ''}" data-upvote="${escapeHtml(f.id)}" aria-pressed="${f.votedLocal ? 'true' : 'false'}">
-              ▲ Upvote <span>${f.upvotes || 0}</span>
-            </button>
-            <button type="button" class="action-btn${f.flagged ? ' flagged' : ''}" data-flag="${escapeHtml(f.id)}" aria-pressed="${f.flagged ? 'true' : 'false'}">
-              ⚑ ${f.flagged ? 'Flagged' : 'Flag'}
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-        els.feedbackFeed.appendChild(card);
-      });
-
-      els.feedbackFeed.querySelectorAll('[data-upvote]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await upvoteFeedback(btn.dataset.upvote);
-            renderFeedback();
-          } catch (err) {
-            console.error(err);
-            showToast('Vote failed');
-          }
-        });
-      });
-      els.feedbackFeed.querySelectorAll('[data-flag]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await flagFeedback(btn.dataset.flag);
-            renderFeedback();
-          } catch (err) {
-            console.error(err);
-            showToast('Flag failed');
-          }
-        });
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-      els.feedbackFeed.innerHTML = '';
-      els.feedbackEmpty.classList.remove('hidden');
-      els.feedbackEmpty.textContent = 'Could not load feedback. Check your Supabase setup.';
-    });
-}
-
 /* —— Utils —— */
 
 function setupFlashyFx() {
@@ -993,7 +770,7 @@ function setupFlashyFx() {
     'click',
     (e) => {
       const host = e.target.closest(
-        '.btn-primary, .batch-card, .choice-chip, .tab-btn, .action-btn, #admin-toggle-btn, #unlock-feed-btn, #batch-continue'
+        '.btn-primary, .batch-card, .choice-chip, .tab-btn, .action-btn, #admin-toggle-btn, #batch-continue'
       );
       if (!host) return;
       spawnRipple(host, e);
@@ -1024,7 +801,7 @@ function spawnBurst() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const layer = document.getElementById('fx-burst');
   if (!layer) return;
-  const colors = ['#3da86e', '#f0b429', '#e85d4c', '#5fbf8a', '#2f8a58'];
+  const colors = ['#FACC15', '#FFE500', '#A78BFA', '#7C3AED', '#E2E8F0'];
   const cx = window.innerWidth / 2;
   const cy = window.innerHeight * 0.42;
   for (let i = 0; i < 28; i++) {

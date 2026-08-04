@@ -1,6 +1,6 @@
 # Ascend Dashboard (Campus Hub)
 
-Dashboard for AIS students — timetable assistant, teacher absence announcements, and anonymous feedback.
+Dashboard for AIS students — timetable assistant and teacher absence announcements.
 
 Secrets (staff password, Discord webhook, Supabase service key) live in **Vercel environment variables** and serverless functions under `/api`. They are not in the browser bundle.
 

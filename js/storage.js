@@ -4,9 +4,7 @@
 
 const KEYS = {
   batch: 'campusHub.selectedBatch',
-  absences: 'campusHub.absences',
-  feedback: 'campusHub.feedback',
-  theme: 'campusHub.theme'
+  absences: 'campusHub.absences'
 };
 
 export function getSelectedBatch() {
@@ -34,27 +32,6 @@ export function saveAbsences(list) {
   localStorage.setItem(KEYS.absences, JSON.stringify(list));
 }
 
-export function loadFeedback() {
-  try {
-    const raw = localStorage.getItem(KEYS.feedback);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function saveFeedback(list) {
-  localStorage.setItem(KEYS.feedback, JSON.stringify(list));
-}
-
 export function uid(prefix = 'id') {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-export function getTheme() {
-  return localStorage.getItem(KEYS.theme);
-}
-
-export function setTheme(theme) {
-  localStorage.setItem(KEYS.theme, theme);
 }
