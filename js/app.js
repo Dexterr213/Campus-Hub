@@ -35,10 +35,11 @@ import {
 const BATCHES = ['A Level Batch 2', 'Batch A', 'Batch B', 'Grade 10', 'Grade 11'];
 
 const els = {
-  landing: document.getElementById('batch-landing'),
+  landing: document.getElementById('batch-picker'),
   shell: document.getElementById('app-shell'),
   batchGrid: document.getElementById('batch-grid'),
   batchBadge: document.getElementById('batch-badge'),
+  batchHeading: document.getElementById('batch-heading'),
   changeBatch: document.getElementById('change-batch-btn'),
   urgentBanner: document.getElementById('urgent-banner'),
   absenceList: document.getElementById('absence-list'),
@@ -353,14 +354,17 @@ function setupBatchLanding() {
 }
 
 function showLanding() {
+  document.body.classList.remove('has-batch');
+  els.landing?.classList.remove('is-collapsed');
   els.shell.hidden = true;
-  els.landing.hidden = false;
-  els.landing.classList.remove('landing-exit');
+  els.shell.classList.add('hidden');
+  if (els.batchHeading) els.batchHeading.textContent = 'Pick your batch to jump in';
   els.batchGrid.querySelectorAll('.batch-card').forEach((c) => {
     c.classList.remove('selected');
     c.setAttribute('aria-selected', 'false');
   });
   playLandingEntrance();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function playLandingEntrance() {
@@ -375,31 +379,36 @@ function enterApp(batch, opts = {}) {
   currentBatch = batch;
   setSelectedBatch(batch);
 
-  const finish = () => {
-    els.landing.hidden = true;
-    els.landing.classList.remove('landing-exit');
-    const hero = document.querySelector('.landing-hero');
-    hero?.classList.remove('is-entered');
-    els.shell.hidden = false;
-    els.shell.classList.remove('is-entering');
-    void els.shell.offsetWidth;
-    els.shell.classList.add('is-entering');
-    els.batchBadge.textContent = batch;
-    bot = createTimetableAssistant(timetables, batch);
-    refreshTimetableControls();
-    clearTimetableResults();
-    renderAbsences();
-    switchTab('absences');
-    requestAnimationFrame(() => moveTabInk());
-  };
+  els.batchGrid.querySelectorAll('.batch-card').forEach((card) => {
+    const on = card.dataset.batch === batch;
+    card.classList.toggle('selected', on);
+    card.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+
+  if (els.batchHeading) els.batchHeading.textContent = `You’re in ${batch}`;
+  els.batchBadge.textContent = batch;
+
+  document.body.classList.add('has-batch');
+  els.landing?.classList.add('is-collapsed');
+  els.shell.hidden = false;
+  els.shell.classList.remove('hidden');
+  els.shell.classList.remove('is-entering');
+  void els.shell.offsetWidth;
+  els.shell.classList.add('is-entering');
+
+  bot = createTimetableAssistant(timetables, batch);
+  refreshTimetableControls();
+  clearTimetableResults();
+  renderAbsences();
+  switchTab('absences');
+  requestAnimationFrame(() => moveTabInk());
 
   if (opts.burst) spawnBurst();
 
-  if (!opts.silent && !els.landing.hidden && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    els.landing.classList.add('landing-exit');
-    setTimeout(finish, 320);
-  } else {
-    finish();
+  if (!opts.silent) {
+    requestAnimationFrame(() => {
+      els.shell.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 }
 
@@ -410,7 +419,7 @@ function setupTabs() {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  const header = document.querySelector('.app-header');
+  const header = document.querySelector('.app-toolbar');
   if (header) {
     window.addEventListener(
       'scroll',
@@ -444,7 +453,13 @@ function switchTab(name) {
 }
 
 function moveTabInk() {
-  // Bottom nav uses active button styles.
+  const ink = document.getElementById('tab-ink');
+  const active = document.querySelector('.tab-btn.tab-active');
+  const nav = document.querySelector('.tab-nav');
+  if (!ink || !active || !nav || els.shell?.hidden) return;
+  const width = Math.max(28, active.offsetWidth * 0.45);
+  ink.style.width = `${width}px`;
+  ink.style.left = `${active.offsetLeft + (active.offsetWidth - width) / 2}px`;
 }
 
 /* —— Absences —— */

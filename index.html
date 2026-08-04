@@ -53,15 +53,15 @@
   <div class="fx-orb fx-orb-c" aria-hidden="true"></div>
   <div id="fx-burst" class="fx-burst" aria-hidden="true"></div>
 
-  <!-- Batch selection landing -->
-  <section id="batch-landing" class="min-h-screen flex flex-col" aria-labelledby="landing-title" hidden>
-    <div class="flex-1 flex flex-col justify-center px-4 py-10 sm:py-12 sm:px-6 lg:px-8 safe-x">
-      <div class="mx-auto w-full max-w-3xl text-center landing-hero">
+  <div id="campus-app" class="relative z-10 min-h-screen flex flex-col">
+    <!-- Persistent hero header (never wiped on batch select) -->
+    <header class="hero-header safe-x px-4 sm:px-6 pt-10 sm:pt-12 pb-2">
+      <div class="mx-auto w-full max-w-3xl text-center landing-hero is-entered">
         <div class="landing-intro">
           <h1 id="landing-title" class="landing-title">Campus Hub</h1>
           <p id="batch-heading" class="landing-kicker">Pick your batch to jump in</p>
           <p class="landing-sub">
-            Live teacher absence alerts and your week’s timetable — built for Ascend students.
+            Alerts when teachers are out, your week’s timetable in one tap — built for Ascend students.
           </p>
         </div>
 
@@ -69,116 +69,122 @@
           <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">📢</span> Live absences</span>
           <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">📅</span> Timetable picks</span>
         </div>
-
-        <div id="batch-grid" class="batch-grid" role="listbox" aria-label="Available batches"></div>
-      </div>
-    </div>
-    <div class="atmosphere-landing" aria-hidden="true"></div>
-  </section>
-
-  <!-- Main app shell -->
-  <div id="app-shell" class="min-h-screen flex flex-col" hidden>
-    <header class="app-header sticky top-0 z-40 border-b border-emerald-900/30 bg-[#0D1512]/90 backdrop-blur-md">
-      <div class="mx-auto max-w-6xl px-3 sm:px-6 safe-x">
-        <div class="flex min-h-14 sm:h-16 items-center justify-between gap-2 sm:gap-3 py-2 sm:py-0">
-          <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span class="font-display text-lg sm:text-xl font-semibold text-ascend-soft truncate">Campus Hub</span>
-            <span id="batch-badge" class="inline-flex max-w-[40vw] sm:max-w-none truncate items-center rounded-full bg-white/5 border border-emerald-900/30 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-ascend-accent"></span>
-            <span id="cloud-status" class="cloud-status hidden text-[10px] sm:text-xs font-semibold tracking-wide" hidden></span>
-          </div>
-          <div class="header-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
-            <button id="change-batch-btn" type="button" class="header-text-btn text-xs sm:text-sm font-medium text-ascend-muted hover:text-white focus:outline-none focus:ring-2 focus:ring-ascend-accent rounded-md px-2 py-2 min-h-10">
-              <span class="sm:hidden">Batch</span>
-              <span class="hidden sm:inline">Change batch</span>
-            </button>
-            <button id="admin-toggle-btn" type="button" class="surface-btn rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white min-h-10" aria-haspopup="dialog">
-              Staff
-            </button>
-            <button id="staff-lock-btn" type="button" class="hidden surface-btn rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white min-h-10" title="End staff session">
-              Lock
-            </button>
-          </div>
-        </div>
       </div>
     </header>
 
-    <main id="main-content" class="flex-1 mx-auto w-full max-w-6xl px-3 sm:px-6 py-4 sm:py-8 safe-x pb-28">
-      <div id="urgent-banner" class="mb-6 hidden" role="alert" aria-live="polite"></div>
+    <!-- Batch picker — collapses after selection -->
+    <section id="batch-picker" class="batch-picker safe-x px-4 sm:px-6 pb-6" aria-label="Batch selection">
+      <div class="mx-auto w-full max-w-3xl">
+        <div id="batch-grid" class="batch-grid" role="listbox" aria-label="Available batches"></div>
+      </div>
+    </section>
 
-      <section id="panel-absences" role="tabpanel" aria-labelledby="tab-absences" class="tab-panel">
-        <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div>
-            <h2 class="font-display text-xl sm:text-2xl font-semibold text-ascend-soft">Teacher Absence Alerts</h2>
-            <p class="mt-1 text-sm sm:text-base text-ascend-muted">Live notices for your batch today and upcoming days.</p>
-          </div>
-          <button type="button" id="notify-toggle-btn" class="btn-primary notify-btn w-full sm:w-auto shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold min-h-11">
-            Enable alerts
-          </button>
-        </div>
-        <p id="notify-hint" class="mb-4 text-xs sm:text-sm text-ascend-muted">Turn on alerts to get a pop-up when an urgent cancellation is posted for your batch.</p>
-        <div id="absence-list" class="grid gap-3 md:grid-cols-2" aria-live="polite"></div>
-        <p id="absence-empty" class="hidden surface-card border-dashed px-6 py-12 text-center text-ascend-muted">
-          No absence alerts for your batch right now.
-        </p>
-      </section>
-
-      <section id="panel-timetable" role="tabpanel" aria-labelledby="tab-timetable" class="tab-panel hidden" hidden>
-        <div class="mb-4 sm:mb-6">
-          <h2 class="font-display text-xl sm:text-2xl font-semibold text-ascend-soft">Timetable Assistant</h2>
-          <p class="mt-1 text-sm sm:text-base text-ascend-muted">Pick a full day or the whole week — no typing needed.</p>
-        </div>
-
-        <form id="timetable-form" class="surface-card p-4 sm:p-6 space-y-5 sm:space-y-6">
-          <fieldset>
-            <legend class="text-sm font-semibold text-white mb-3">What do you want?</legend>
-            <div class="choice-grid choice-grid--two">
-              <label class="choice-chip">
-                <input type="radio" name="tt-mode" value="day" checked />
-                <span>Full day</span>
-              </label>
-              <label class="choice-chip">
-                <input type="radio" name="tt-mode" value="week" />
-                <span>Full week</span>
-              </label>
+    <!-- Dashboard — reveals under header after batch select -->
+    <div id="app-shell" class="dashboard flex-1 flex flex-col" hidden>
+      <div class="app-toolbar sticky top-0 z-40 border-y border-emerald-900/30 bg-[#0D1512]/92 backdrop-blur-md">
+        <div class="mx-auto max-w-6xl px-3 sm:px-6 safe-x">
+          <div class="flex min-h-12 sm:min-h-14 items-center justify-between gap-2 py-2">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+              <span id="batch-badge" class="inline-flex max-w-[45vw] sm:max-w-none truncate items-center rounded-full bg-emerald-950/40 border border-emerald-500/40 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-ascend-accent"></span>
+              <span id="cloud-status" class="cloud-status hidden text-[10px] sm:text-xs font-semibold tracking-wide" hidden></span>
             </div>
-          </fieldset>
+            <div class="header-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button id="change-batch-btn" type="button" class="header-text-btn text-xs sm:text-sm font-medium text-ascend-muted hover:text-white focus:outline-none focus:ring-2 focus:ring-ascend-accent rounded-md px-2 py-2 min-h-10">
+                <span class="sm:hidden">Batch</span>
+                <span class="hidden sm:inline">Change batch</span>
+              </button>
+              <button id="admin-toggle-btn" type="button" class="surface-btn rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white min-h-10" aria-haspopup="dialog">
+                Staff
+              </button>
+              <button id="staff-lock-btn" type="button" class="hidden surface-btn rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white min-h-10" title="End staff session">
+                Lock
+              </button>
+            </div>
+          </div>
 
-          <fieldset id="tt-day-fieldset">
-            <legend class="text-sm font-semibold text-white mb-3">Day</legend>
-            <div id="tt-day-options" class="day-chip-row" role="radiogroup" aria-label="Select day"></div>
-          </fieldset>
-
-          <div class="flex flex-col-reverse sm:flex-row flex-wrap gap-2">
-            <button type="button" id="tt-reset" class="surface-btn w-full sm:w-auto rounded-xl px-5 py-3.5 sm:py-3 font-medium min-h-12">
-              Reset
+          <nav class="tab-nav relative flex gap-0 sm:gap-1 overflow-x-auto overscroll-x-contain -mx-3 px-3 sm:mx-0 sm:px-0" role="tablist" aria-label="Main sections">
+            <span id="tab-ink" class="tab-ink" aria-hidden="true"></span>
+            <button type="button" role="tab" id="tab-absences" aria-controls="panel-absences" aria-selected="true" data-tab="absences" class="tab-btn tab-active flex-1 sm:flex-none shrink-0 px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ascend-accent min-h-11">
+              <span aria-hidden="true">📢</span>
+              <span class="tab-label-short sm:hidden">Alerts</span>
+              <span class="tab-label-full hidden sm:inline">Absence Alerts</span>
             </button>
-            <button type="submit" class="btn-primary w-full sm:w-auto rounded-xl px-6 py-3.5 sm:py-3 font-semibold min-h-12">
-              Show schedule
+            <button type="button" role="tab" id="tab-timetable" aria-controls="panel-timetable" aria-selected="false" data-tab="timetable" class="tab-btn flex-1 sm:flex-none shrink-0 px-3 sm:px-4 py-3 text-xs sm:text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-inset focus:ring-ascend-accent min-h-11">
+              <span aria-hidden="true">📅</span>
+              <span class="tab-label-short sm:hidden">Timetable</span>
+              <span class="tab-label-full hidden sm:inline">Timetable Assistant</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <main id="main-content" class="flex-1 mx-auto w-full max-w-6xl px-3 sm:px-6 py-5 sm:py-8 safe-x pb-safe">
+        <div id="urgent-banner" class="mb-6 hidden" role="alert" aria-live="polite"></div>
+
+        <section id="panel-absences" role="tabpanel" aria-labelledby="tab-absences" class="tab-panel">
+          <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+            <div>
+              <h2 class="font-display text-xl sm:text-2xl font-semibold text-ascend-soft">Teacher Absence Alerts</h2>
+              <p class="mt-1 text-sm sm:text-base text-ascend-muted">Live notices for your batch today and upcoming days.</p>
+            </div>
+            <button type="button" id="notify-toggle-btn" class="btn-primary notify-btn w-full sm:w-auto shrink-0 rounded-xl px-3 py-2.5 text-sm font-semibold min-h-11">
+              Enable alerts
             </button>
           </div>
-        </form>
+          <p id="notify-hint" class="mb-4 text-xs sm:text-sm text-ascend-muted">Turn on alerts to get a pop-up when an urgent cancellation is posted for your batch.</p>
+          <div id="absence-list" class="grid gap-3 md:grid-cols-2" aria-live="polite"></div>
+          <p id="absence-empty" class="hidden surface-card border-dashed px-6 py-12 text-center text-ascend-muted">
+            No absence alerts for your batch right now.
+          </p>
+        </section>
 
-        <div id="tt-results" class="mt-5 sm:mt-6 hidden" hidden aria-live="polite">
-          <h3 id="tt-results-title" class="text-base sm:text-lg font-semibold text-white mb-3"></h3>
-          <ul id="tt-results-list" class="tt-results-list space-y-2"></ul>
-          <p id="tt-results-empty" class="hidden surface-card border-dashed px-4 sm:px-6 py-8 text-center text-ascend-muted"></p>
-        </div>
-      </section>
-    </main>
+        <section id="panel-timetable" role="tabpanel" aria-labelledby="tab-timetable" class="tab-panel hidden" hidden>
+          <div class="mb-4 sm:mb-6">
+            <h2 class="font-display text-xl sm:text-2xl font-semibold text-ascend-soft">Timetable Assistant</h2>
+            <p class="mt-1 text-sm sm:text-base text-ascend-muted">Pick a full day or the whole week — no typing needed.</p>
+          </div>
 
-    <nav class="bottom-nav" role="tablist" aria-label="Main sections">
-      <button type="button" role="tab" id="tab-absences" aria-controls="panel-absences" aria-selected="true" data-tab="absences" class="tab-btn tab-active">
-        <span aria-hidden="true">📢</span>
-        <span class="tab-label-short">Alerts</span>
-        <span class="tab-label-full">Absence Alerts</span>
-      </button>
-      <button type="button" role="tab" id="tab-timetable" aria-controls="panel-timetable" aria-selected="false" data-tab="timetable" class="tab-btn">
-        <span aria-hidden="true">📅</span>
-        <span class="tab-label-short">Timetable</span>
-        <span class="tab-label-full">Timetable Assistant</span>
-      </button>
-    </nav>
+          <form id="timetable-form" class="surface-card p-4 sm:p-6 space-y-5 sm:space-y-6">
+            <fieldset>
+              <legend class="text-sm font-semibold text-white mb-3">What do you want?</legend>
+              <div class="choice-grid choice-grid--two">
+                <label class="choice-chip">
+                  <input type="radio" name="tt-mode" value="day" checked />
+                  <span>Full day</span>
+                </label>
+                <label class="choice-chip">
+                  <input type="radio" name="tt-mode" value="week" />
+                  <span>Full week</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset id="tt-day-fieldset">
+              <legend class="text-sm font-semibold text-white mb-3">Day</legend>
+              <div id="tt-day-options" class="day-chip-row" role="radiogroup" aria-label="Select day"></div>
+            </fieldset>
+
+            <div class="flex flex-col-reverse sm:flex-row flex-wrap gap-2">
+              <button type="button" id="tt-reset" class="surface-btn w-full sm:w-auto rounded-xl px-5 py-3.5 sm:py-3 font-medium min-h-12">
+                Reset
+              </button>
+              <button type="submit" class="btn-primary w-full sm:w-auto rounded-xl px-6 py-3.5 sm:py-3 font-semibold min-h-12">
+                Show schedule
+              </button>
+            </div>
+          </form>
+
+          <div id="tt-results" class="mt-5 sm:mt-6 hidden" hidden aria-live="polite">
+            <h3 id="tt-results-title" class="text-base sm:text-lg font-semibold text-white mb-3"></h3>
+            <ul id="tt-results-list" class="tt-results-list space-y-2"></ul>
+            <p id="tt-results-empty" class="hidden surface-card border-dashed px-4 sm:px-6 py-8 text-center text-ascend-muted"></p>
+          </div>
+        </section>
+      </main>
+    </div>
   </div>
+
+  <div class="atmosphere-landing" aria-hidden="true"></div>
 
   <!-- Staff password gate -->
   <div id="auth-modal" class="fixed inset-0 z-50 hidden modal-root" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title" hidden>
@@ -217,7 +223,7 @@
           <p class="text-sm text-ascend-muted mt-1">Staff only — posts appear for the selected batch.</p>
         </div>
         <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-modal aria-label="Close dialog">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 0 0-1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
         </button>
       </div>
       <form id="absence-form" class="space-y-4">
@@ -255,7 +261,7 @@
     </div>
   </div>
 
-  <div id="toast" class="fixed bottom-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] left-1/2 -translate-x-1/2 z-[60] hidden max-w-[calc(100%-2rem)] rounded-xl bg-ascend-accent px-4 py-2.5 text-sm font-semibold text-ascend-bg shadow-glow" role="status" aria-live="polite"></div>
+  <div id="toast" class="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-[60] hidden max-w-[calc(100%-2rem)] rounded-xl bg-ascend-accent px-4 py-2.5 text-sm font-semibold text-ascend-bg shadow-glow" role="status" aria-live="polite"></div>
 
   <script type="module" src="js/app.js"></script>
 </body>
