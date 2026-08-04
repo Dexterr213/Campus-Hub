@@ -1,4 +1,4 @@
-/* Ascend motion accents */
+/* Ascend motion accents — muted for eye comfort */
 
 #batch-landing,
 #app-shell {
@@ -9,17 +9,17 @@
 .fx-orb {
   position: fixed;
   border-radius: 9999px;
-  filter: blur(52px);
+  filter: blur(64px);
   pointer-events: none;
   z-index: 0;
-  opacity: 0.4;
-  mix-blend-mode: screen;
+  opacity: 0.18;
+  mix-blend-mode: soft-light;
 }
 
 .fx-orb-a {
   width: 22rem;
   height: 22rem;
-  background: #7c3aed;
+  background: #6d28d9;
   top: -6rem;
   left: -4rem;
   animation: orb-float 14s ease-in-out infinite;
@@ -28,12 +28,12 @@
 .fx-orb-b {
   width: 18rem;
   height: 18rem;
-  background: #facc15;
+  background: #ca8a04;
   top: 35%;
   right: -5rem;
   animation: orb-float 18s ease-in-out infinite reverse;
   animation-delay: -3s;
-  opacity: 0.22;
+  opacity: 0.1;
 }
 
 .fx-orb-c {
@@ -44,6 +44,7 @@
   left: 30%;
   animation: orb-float 16s ease-in-out infinite;
   animation-delay: -6s;
+  opacity: 0.16;
 }
 
 @keyframes orb-float {

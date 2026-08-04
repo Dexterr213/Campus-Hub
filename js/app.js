@@ -332,8 +332,8 @@ function setupBatchLanding() {
     card.innerHTML = `
       <div class="flex items-start justify-between gap-3">
         <div>
-          <span class="font-display text-lg font-semibold text-white">${escapeHtml(batch)}</span>
-          <span class="block mt-1 text-sm text-ascend-lavender/80">Absences · timetable</span>
+          <span class="font-display text-lg font-semibold text-ascend-soft">${escapeHtml(batch)}</span>
+          <span class="block mt-1 text-sm text-ascend-lavender batch-card-sub">Absences · timetable</span>
         </div>
         <span class="batch-arrow" aria-hidden="true">→</span>
       </div>
@@ -487,7 +487,7 @@ function renderAbsences(opts = {}) {
         <span class="text-lg" aria-hidden="true">⚠️</span>
         <div>
           <p class="font-semibold text-ascend-yellow text-sm uppercase tracking-wide">Urgent cancellation</p>
-          <p class="text-white font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
+          <p class="text-ascend-soft font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
           ${a.cover ? `<p class="text-sm text-ascend-lavender/80 mt-1">${escapeHtml(a.cover)}</p>` : ''}
         </div>
       </div>`
@@ -510,7 +510,7 @@ function renderAbsences(opts = {}) {
           card.innerHTML = `
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 class="font-semibold text-white">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
+          <h3 class="font-semibold text-ascend-soft">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
           <p class="text-sm text-ascend-lavender/75 mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
         </div>
         ${a.urgent ? '<span class="rounded-full bg-white/10 border border-ascend-yellow/40 px-2.5 py-0.5 text-xs font-bold text-ascend-yellow">URGENT</span>' : ''}
