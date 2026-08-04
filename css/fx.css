@@ -1,4 +1,4 @@
-/* Ascend motion accents — muted for eye comfort */
+/* Ascend motion accents — soft violet atmosphere */
 
 #batch-landing,
 #app-shell {
@@ -9,48 +9,48 @@
 .fx-orb {
   position: fixed;
   border-radius: 9999px;
-  filter: blur(64px);
+  filter: blur(72px);
   pointer-events: none;
   z-index: 0;
-  opacity: 0.18;
+  opacity: 0.14;
   mix-blend-mode: soft-light;
 }
 
 .fx-orb-a {
-  width: 22rem;
-  height: 22rem;
-  background: #6d28d9;
-  top: -6rem;
-  left: -4rem;
-  animation: orb-float 14s ease-in-out infinite;
+  width: 24rem;
+  height: 24rem;
+  background: #6366f1;
+  top: -8rem;
+  left: -6rem;
+  animation: orb-float 18s ease-in-out infinite;
 }
 
 .fx-orb-b {
-  width: 18rem;
-  height: 18rem;
-  background: #ca8a04;
-  top: 35%;
-  right: -5rem;
-  animation: orb-float 18s ease-in-out infinite reverse;
-  animation-delay: -3s;
+  width: 20rem;
+  height: 20rem;
+  background: #a78bfa;
+  top: 40%;
+  right: -7rem;
+  animation: orb-float 22s ease-in-out infinite reverse;
+  animation-delay: -4s;
   opacity: 0.1;
 }
 
 .fx-orb-c {
-  width: 16rem;
-  height: 16rem;
+  width: 18rem;
+  height: 18rem;
   background: #4c1d95;
-  bottom: -4rem;
-  left: 30%;
-  animation: orb-float 16s ease-in-out infinite;
-  animation-delay: -6s;
-  opacity: 0.16;
+  bottom: -5rem;
+  left: 35%;
+  animation: orb-float 20s ease-in-out infinite;
+  animation-delay: -7s;
+  opacity: 0.12;
 }
 
 @keyframes orb-float {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(4%, -6%) scale(1.08); }
-  66% { transform: translate(-5%, 4%) scale(0.94); }
+  33% { transform: translate(3%, -4%) scale(1.05); }
+  66% { transform: translate(-3%, 3%) scale(0.96); }
 }
 
 .fx-burst {

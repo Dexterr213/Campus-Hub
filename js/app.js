@@ -38,8 +38,6 @@ const els = {
   landing: document.getElementById('batch-landing'),
   shell: document.getElementById('app-shell'),
   batchGrid: document.getElementById('batch-grid'),
-  batchSelect: document.getElementById('batch-select'),
-  batchContinue: document.getElementById('batch-continue'),
   batchBadge: document.getElementById('batch-badge'),
   changeBatch: document.getElementById('change-batch-btn'),
   urgentBanner: document.getElementById('urgent-banner'),
@@ -70,7 +68,6 @@ const els = {
   toast: document.getElementById('toast')
 };
 
-let selectedDraft = '';
 let currentBatch = '';
 let timetables = {};
 let bot = null;
@@ -320,7 +317,6 @@ function closeAuthModal() {
 
 function setupBatchLanding() {
   els.batchGrid.innerHTML = '';
-  els.batchSelect.innerHTML = '<option value="">Or pick from list…</option>';
 
   BATCHES.forEach((batch) => {
     const card = document.createElement('button');
@@ -332,29 +328,22 @@ function setupBatchLanding() {
     card.innerHTML = `
       <div class="flex items-start justify-between gap-3">
         <div>
-          <span class="font-display text-lg font-semibold text-ascend-soft">${escapeHtml(batch)}</span>
-          <span class="block mt-1 text-sm text-ascend-lavender batch-card-sub">Absences · timetable</span>
+          <span class="batch-card-title">${escapeHtml(batch)}</span>
+          <span class="batch-card-sub">Absences · timetable</span>
         </div>
         <span class="batch-arrow" aria-hidden="true">→</span>
       </div>
     `;
-    card.addEventListener('click', () => selectDraft(batch));
+    card.addEventListener('click', () => {
+      els.batchGrid.querySelectorAll('.batch-card').forEach((c) => {
+        const on = c === card;
+        c.classList.toggle('selected', on);
+        c.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+      setSelectedBatch(batch);
+      enterApp(batch, { burst: true });
+    });
     els.batchGrid.appendChild(card);
-
-    const opt = document.createElement('option');
-    opt.value = batch;
-    opt.textContent = batch;
-    els.batchSelect.appendChild(opt);
-  });
-
-  els.batchSelect.addEventListener('change', () => {
-    if (els.batchSelect.value) selectDraft(els.batchSelect.value);
-  });
-
-  els.batchContinue.addEventListener('click', () => {
-    if (!selectedDraft) return;
-    setSelectedBatch(selectedDraft);
-    enterApp(selectedDraft, { burst: true });
   });
 
   els.changeBatch.addEventListener('click', () => {
@@ -363,24 +352,10 @@ function setupBatchLanding() {
   });
 }
 
-function selectDraft(batch) {
-  selectedDraft = batch;
-  els.batchSelect.value = batch;
-  els.batchContinue.disabled = false;
-  els.batchGrid.querySelectorAll('.batch-card').forEach((card) => {
-    const on = card.dataset.batch === batch;
-    card.classList.toggle('selected', on);
-    card.setAttribute('aria-selected', on ? 'true' : 'false');
-  });
-}
-
 function showLanding() {
   els.shell.hidden = true;
   els.landing.hidden = false;
   els.landing.classList.remove('landing-exit');
-  selectedDraft = '';
-  els.batchContinue.disabled = true;
-  els.batchSelect.value = '';
   els.batchGrid.querySelectorAll('.batch-card').forEach((c) => {
     c.classList.remove('selected');
     c.setAttribute('aria-selected', 'false');
@@ -472,7 +447,7 @@ function moveTabInk() {
 function renderAbsences(opts = {}) {
   if (!currentBatch || !els.absenceList) return;
   if (!opts.fromRealtime) {
-    els.absenceList.innerHTML = `<p class="text-sm text-ascend-lavender/70 px-1">Loading alerts…</p>`;
+    els.absenceList.innerHTML = `<p class="text-sm text-ascend-muted px-1">Loading alerts…</p>`;
   }
 
   Promise.all([getAbsencesForBatch(currentBatch), getUrgentForBatch(currentBatch)])
@@ -486,9 +461,9 @@ function renderAbsences(opts = {}) {
       <div class="urgent-banner-inner mb-2 last:mb-0">
         <span class="text-lg" aria-hidden="true">⚠️</span>
         <div>
-          <p class="font-semibold text-ascend-yellow text-sm uppercase tracking-wide">Urgent cancellation</p>
-          <p class="text-ascend-soft font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
-          ${a.cover ? `<p class="text-sm text-ascend-lavender/80 mt-1">${escapeHtml(a.cover)}</p>` : ''}
+          <p class="font-semibold text-ascend-accent text-sm uppercase tracking-wide">Urgent cancellation</p>
+          <p class="text-white font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
+          ${a.cover ? `<p class="text-sm text-ascend-muted mt-1">${escapeHtml(a.cover)}</p>` : ''}
         </div>
       </div>`
           )
@@ -510,12 +485,12 @@ function renderAbsences(opts = {}) {
           card.innerHTML = `
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 class="font-semibold text-ascend-soft">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
-          <p class="text-sm text-ascend-lavender/75 mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
+          <h3 class="font-semibold text-white">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
+          <p class="text-sm text-ascend-muted mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
         </div>
-        ${a.urgent ? '<span class="rounded-full bg-white/10 border border-ascend-yellow/40 px-2.5 py-0.5 text-xs font-bold text-ascend-yellow">URGENT</span>' : ''}
+        ${a.urgent ? '<span class="rounded-full bg-white/10 border border-ascend-accent/40 px-2.5 py-0.5 text-xs font-bold text-ascend-accent">URGENT</span>' : ''}
       </div>
-      ${a.cover ? `<p class="mt-2 text-sm text-ascend-lavender border-t border-white/10 pt-2">${escapeHtml(a.cover)}</p>` : ''}
+      ${a.cover ? `<p class="mt-2 text-sm text-ascend-muted border-t border-white/10 pt-2">${escapeHtml(a.cover)}</p>` : ''}
     `;
           els.absenceList.appendChild(card);
         });
@@ -770,7 +745,7 @@ function setupFlashyFx() {
     'click',
     (e) => {
       const host = e.target.closest(
-        '.btn-primary, .batch-card, .choice-chip, .tab-btn, .action-btn, #admin-toggle-btn, #batch-continue'
+        '.btn-primary, .batch-card, .choice-chip, .tab-btn, .action-btn, #admin-toggle-btn'
       );
       if (!host) return;
       spawnRipple(host, e);
@@ -801,7 +776,7 @@ function spawnBurst() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const layer = document.getElementById('fx-burst');
   if (!layer) return;
-  const colors = ['#FACC15', '#FFE500', '#A78BFA', '#7C3AED', '#E2E8F0'];
+  const colors = ['#C4B5FD', '#A78BFA', '#818CF8', '#D4A017', '#E2E8F0'];
   const cx = window.innerWidth / 2;
   const cy = window.innerHeight * 0.42;
   for (let i = 0; i < 28; i++) {
