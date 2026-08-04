@@ -2,11 +2,11 @@
   white-space: nowrap;
   border-radius: 999px;
   padding: 0.2rem 0.55rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(6, 78, 59, 0.35);
 }
 
 .cloud-status--live {
-  background: rgba(52, 211, 153, 0.12);
+  background: rgba(16, 185, 129, 0.12);
   color: #34d399;
 }
 
@@ -16,7 +16,7 @@
 }
 
 .notify-btn.notify-btn--on {
-  background: #34d399 !important;
+  background: #10b981 !important;
   color: #06241a !important;
-  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3), 0 8px 24px rgba(52, 211, 153, 0.2);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3), 0 0 15px rgba(16, 185, 129, 0.15);
 }

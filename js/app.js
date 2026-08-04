@@ -21,14 +21,6 @@ import { createTimetableAssistant } from './chatbot.js';
 import { STAFF_SESSION_KEY } from './config.js';
 import { cloudEnabled } from './db.js';
 import {
-  listFeedback,
-  submitFeedback,
-  upvoteFeedback,
-  flagFeedback,
-  subscribeFeedback,
-  formatRelativeTime
-} from './feedback.js';
-import {
   enableNotifications,
   disableNotifications,
   getNotifyPref,
@@ -73,23 +65,16 @@ const els = {
   absenceForm: document.getElementById('absence-form'),
   absBatch: document.getElementById('abs-batch'),
   absDate: document.getElementById('abs-date'),
-  toast: document.getElementById('toast'),
-  feedbackForm: document.getElementById('feedback-form'),
-  feedbackFeed: document.getElementById('feedback-feed'),
-  feedbackEmpty: document.getElementById('feedback-empty'),
-  feedbackLocked: document.getElementById('feedback-locked'),
-  feedbackUnlocked: document.getElementById('feedback-unlocked'),
-  feedbackUnlockBtn: document.getElementById('feedback-unlock-btn')
+  toast: document.getElementById('toast')
 };
 
 let currentBatch = '';
 let timetables = {};
 let bot = null;
 let toastTimer = null;
-/** @type {null | 'publish' | 'feedback'} */
+/** @type {null | 'publish'} */
 let pendingAuthAction = null;
 let unsubAbsences = null;
-let unsubFeedback = null;
 /** Staff password kept in memory only after /api/verify-staff succeeds. */
 let staffPasswordSession = '';
 
@@ -108,13 +93,11 @@ async function init() {
   setupAuth();
   setupAdminModal();
   setupTimetableAssistant();
-  setupFeedback();
   setupLiveSync();
   setupFlashyFx();
   setupNotifyUi();
   setupVisibilityTitleReset();
   updateStaffUi();
-  updateFeedbackGate();
 
   const saved = getSelectedBatch();
   if (saved && BATCHES.includes(saved)) {
@@ -142,12 +125,8 @@ function updateCloudBadge() {
 
 function setupLiveSync() {
   if (unsubAbsences) unsubAbsences();
-  if (unsubFeedback) unsubFeedback();
   unsubAbsences = subscribeAbsences((payload) => {
     if (currentBatch) renderAbsences({ fromRealtime: true, payload });
-  });
-  unsubFeedback = subscribeFeedback(() => {
-    if (isStaffUnlocked()) renderFeedback();
   });
 }
 
@@ -251,7 +230,6 @@ function updateStaffUi() {
   if (els.staffLockBtn) {
     els.staffLockBtn.classList.toggle('hidden', !unlocked);
   }
-  updateFeedbackGate();
 }
 
 function setupAuth() {
@@ -285,7 +263,6 @@ function setupAuth() {
       const action = pendingAuthAction;
       pendingAuthAction = null;
       if (action === 'publish') openAdminModal();
-      if (action === 'feedback') updateFeedbackGate();
     } catch (err) {
       console.error(err);
       showToast('Staff verify failed — use the Vercel site URL');
@@ -318,7 +295,6 @@ function setupAuth() {
 function requireStaff(action, description) {
   if (isStaffUnlocked()) {
     if (action === 'publish') openAdminModal();
-    if (action === 'feedback') updateFeedbackGate();
     return;
   }
   pendingAuthAction = action;
@@ -353,7 +329,7 @@ function setupBatchLanding() {
       <div class="flex items-start justify-between gap-3">
         <div>
           <span class="batch-card-title">${escapeHtml(batch)}</span>
-          <span class="batch-card-sub">Absences · timetable · feedback</span>
+          <span class="batch-card-sub">Absences · timetable</span>
         </div>
         <span class="batch-arrow" aria-hidden="true">→</span>
       </div>
@@ -384,6 +360,15 @@ function showLanding() {
     c.classList.remove('selected');
     c.setAttribute('aria-selected', 'false');
   });
+  playLandingEntrance();
+}
+
+function playLandingEntrance() {
+  const hero = document.querySelector('.landing-hero');
+  if (!hero) return;
+  hero.classList.remove('is-entered');
+  void hero.offsetWidth;
+  requestAnimationFrame(() => hero.classList.add('is-entered'));
 }
 
 function enterApp(batch, opts = {}) {
@@ -393,6 +378,8 @@ function enterApp(batch, opts = {}) {
   const finish = () => {
     els.landing.hidden = true;
     els.landing.classList.remove('landing-exit');
+    const hero = document.querySelector('.landing-hero');
+    hero?.classList.remove('is-entered');
     els.shell.hidden = false;
     els.shell.classList.remove('is-entering');
     void els.shell.offsetWidth;
@@ -403,7 +390,6 @@ function enterApp(batch, opts = {}) {
     clearTimetableResults();
     renderAbsences();
     switchTab('absences');
-    updateFeedbackGate();
     requestAnimationFrame(() => moveTabInk());
   };
 
@@ -454,121 +440,11 @@ function switchTab(name) {
       panel.style.animation = '';
     }
   });
-  if (name === 'feedback') updateFeedbackGate();
   moveTabInk();
 }
 
 function moveTabInk() {
-  // Bottom nav uses active styles on buttons; ink is unused.
-}
-
-/* —— Feedback —— */
-
-function updateFeedbackGate() {
-  const unlocked = isStaffUnlocked();
-  if (els.feedbackLocked) {
-    els.feedbackLocked.classList.toggle('hidden', unlocked);
-    els.feedbackLocked.hidden = unlocked;
-  }
-  if (els.feedbackUnlocked) {
-    els.feedbackUnlocked.classList.toggle('hidden', !unlocked);
-    els.feedbackUnlocked.hidden = !unlocked;
-  }
-  if (unlocked) renderFeedback();
-}
-
-function setupFeedback() {
-  els.feedbackForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const category = document.getElementById('feedback-category').value;
-    const message = document.getElementById('feedback-message').value;
-    if (!category || !message.trim()) return;
-    try {
-      await submitFeedback({ category, message });
-      els.feedbackForm.reset();
-      showToast(cloudEnabled ? 'Posted for staff to review' : 'Saved on this device only');
-      if (isStaffUnlocked()) renderFeedback();
-    } catch (err) {
-      console.error(err);
-      showToast('Submit failed — check Supabase setup');
-    }
-  });
-
-  els.feedbackUnlockBtn?.addEventListener('click', () => {
-    requireStaff('feedback', 'Enter the staff password to view the feedback feed.');
-  });
-}
-
-function renderFeedback() {
-  if (!isStaffUnlocked() || !els.feedbackFeed) return;
-  els.feedbackFeed.innerHTML = `<p class="text-sm text-ascend-muted">Loading feedback…</p>`;
-
-  listFeedback()
-    .then((items) => {
-      els.feedbackFeed.innerHTML = '';
-      if (!items.length) {
-        els.feedbackEmpty.classList.remove('hidden');
-        return;
-      }
-      els.feedbackEmpty.classList.add('hidden');
-
-      items.forEach((f) => {
-        const hueBg = `hsl(${f.avatarHue} 30% 18%)`;
-        const card = document.createElement('article');
-        card.className = 'feedback-card';
-        card.innerHTML = `
-      <div class="flex gap-3">
-        <div class="avatar-badge" style="background: ${hueBg}" aria-hidden="true">${f.avatarEmoji}</div>
-        <div class="min-w-0 flex-1">
-          <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span class="font-semibold text-white">${escapeHtml(f.avatarLabel)}</span>
-            <span class="rounded-full bg-white/10 border border-white/10 px-2 py-0.5 text-xs font-semibold text-ascend-accent">${escapeHtml(f.category)}</span>
-            <time class="text-xs text-ascend-muted" datetime="${escapeHtml(f.createdAt)}">${escapeHtml(formatRelativeTime(f.createdAt))}</time>
-          </div>
-          <p class="mt-2 text-ascend-mist whitespace-pre-wrap">${escapeHtml(f.message)}</p>
-          <div class="mt-3 flex flex-wrap gap-2">
-            <button type="button" class="action-btn${f.votedLocal ? ' active' : ''}" data-upvote="${escapeHtml(f.id)}" aria-pressed="${f.votedLocal ? 'true' : 'false'}">
-              ▲ Upvote <span>${f.upvotes || 0}</span>
-            </button>
-            <button type="button" class="action-btn${f.flagged ? ' flagged' : ''}" data-flag="${escapeHtml(f.id)}" aria-pressed="${f.flagged ? 'true' : 'false'}">
-              ⚑ ${f.flagged ? 'Flagged' : 'Flag'}
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-        els.feedbackFeed.appendChild(card);
-      });
-
-      els.feedbackFeed.querySelectorAll('[data-upvote]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await upvoteFeedback(btn.dataset.upvote);
-            renderFeedback();
-          } catch (err) {
-            console.error(err);
-            showToast('Vote failed');
-          }
-        });
-      });
-      els.feedbackFeed.querySelectorAll('[data-flag]').forEach((btn) => {
-        btn.addEventListener('click', async () => {
-          try {
-            await flagFeedback(btn.dataset.flag);
-            renderFeedback();
-          } catch (err) {
-            console.error(err);
-            showToast('Flag failed');
-          }
-        });
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-      els.feedbackFeed.innerHTML = '';
-      els.feedbackEmpty.classList.remove('hidden');
-      els.feedbackEmpty.textContent = 'Could not load feedback. Check your Supabase setup.';
-    });
+  // Bottom nav uses active button styles.
 }
 
 /* —— Absences —— */
@@ -905,7 +781,7 @@ function spawnBurst() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const layer = document.getElementById('fx-burst');
   if (!layer) return;
-  const colors = ['#34D399', '#10B981', '#FFE500', '#6EE7B7', '#E2E8F0'];
+  const colors = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#E2E8F0'];
   const cx = window.innerWidth / 2;
   const cy = window.innerHeight * 0.42;
   for (let i = 0; i < 28; i++) {

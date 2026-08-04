@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0A0D0E" />
-  <meta name="description" content="Ascend Campus Hub — teacher absence alerts, timetable assistant, and anonymous feedback." />
+  <meta name="theme-color" content="#0D1512" />
+  <meta name="description" content="Ascend Campus Hub — teacher absence alerts and timetable assistant." />
   <title>Campus Hub — Ascend International</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -13,15 +13,15 @@
         extend: {
           colors: {
             ascend: {
-              bg: '#0A0D0E',
-              deep: '#121A16',
-              mid: '#1A2420',
-              accent: '#34D399',
-              accentHot: '#10B981',
-              yellow: '#FFE500',
+              bg: '#0D1512',
+              deep: '#0F1715',
+              mid: '#14201B',
+              accent: '#10B981',
+              accentHot: '#34D399',
               soft: '#F8FAFC',
               mist: '#E2E8F0',
-              muted: '#94A3B8'
+              muted: '#94A3B8',
+              mint: '#A7F3D0'
             }
           },
           fontFamily: {
@@ -30,7 +30,7 @@
           },
           boxShadow: {
             soft: '0 12px 40px rgba(0, 0, 0, 0.45)',
-            glow: '0 0 28px rgba(52, 211, 153, 0.22)'
+            glow: '0 0 15px rgba(16, 185, 129, 0.15)'
           }
         }
       }
@@ -57,23 +57,17 @@
   <section id="batch-landing" class="min-h-screen flex flex-col" aria-labelledby="landing-title" hidden>
     <div class="flex-1 flex flex-col justify-center px-4 py-10 sm:py-12 sm:px-6 lg:px-8 safe-x">
       <div class="mx-auto w-full max-w-3xl text-center landing-hero">
-        <div class="ascend-logo-pill" aria-label="Ascend International School">
-          <span class="ascend-logo-mark" aria-hidden="true">
-            <img class="ascend-logo-arrow ascend-logo-arrow--photo" src="assets/ascend-arrow.png" width="36" height="36" alt="" />
-          </span>
-          <span class="ascend-logo-full">ASCEND INTERNATIONAL SCHOOL</span>
+        <div class="landing-intro">
+          <h1 id="landing-title" class="landing-title">Campus Hub</h1>
+          <p id="batch-heading" class="landing-kicker">Pick your batch to jump in</p>
+          <p class="landing-sub">
+            Live teacher absence alerts and your week’s timetable — built for Ascend students.
+          </p>
         </div>
 
-        <h1 id="landing-title" class="landing-title">Campus Hub</h1>
-        <p id="batch-heading" class="landing-kicker">Pick your batch to jump in</p>
-        <p class="landing-sub">
-          Live teacher absence alerts and your week’s timetable — built for Ascend students.
-        </p>
-
-        <div class="feature-pills">
+        <div class="feature-pills landing-pills">
           <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">📢</span> Live absences</span>
           <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">📅</span> Timetable picks</span>
-          <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">💬</span> Anonymous feedback</span>
         </div>
 
         <div id="batch-grid" class="batch-grid" role="listbox" aria-label="Available batches"></div>
@@ -84,15 +78,12 @@
 
   <!-- Main app shell -->
   <div id="app-shell" class="min-h-screen flex flex-col" hidden>
-    <header class="app-header sticky top-0 z-40 border-b border-white/[0.08] bg-[#0A0D0E]/90 backdrop-blur-md">
+    <header class="app-header sticky top-0 z-40 border-b border-emerald-900/30 bg-[#0D1512]/90 backdrop-blur-md">
       <div class="mx-auto max-w-6xl px-3 sm:px-6 safe-x">
         <div class="flex min-h-14 sm:h-16 items-center justify-between gap-2 sm:gap-3 py-2 sm:py-0">
           <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-            <span class="ascend-logo-mark ascend-logo-mark--sm" aria-hidden="true">
-              <img class="ascend-logo-arrow ascend-logo-arrow--photo" src="assets/ascend-arrow.png" width="28" height="28" alt="" />
-            </span>
             <span class="font-display text-lg sm:text-xl font-semibold text-ascend-soft truncate">Campus Hub</span>
-            <span id="batch-badge" class="inline-flex max-w-[40vw] sm:max-w-none truncate items-center rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-ascend-accent"></span>
+            <span id="batch-badge" class="inline-flex max-w-[40vw] sm:max-w-none truncate items-center rounded-full bg-white/5 border border-emerald-900/30 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-ascend-accent"></span>
             <span id="cloud-status" class="cloud-status hidden text-[10px] sm:text-xs font-semibold tracking-wide" hidden></span>
           </div>
           <div class="header-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -173,58 +164,9 @@
           <p id="tt-results-empty" class="hidden surface-card border-dashed px-4 sm:px-6 py-8 text-center text-ascend-muted"></p>
         </div>
       </section>
-
-      <section id="panel-feedback" role="tabpanel" aria-labelledby="tab-feedback" class="tab-panel hidden" hidden>
-        <div class="mb-4 sm:mb-6">
-          <h2 class="font-display text-xl sm:text-2xl font-semibold text-ascend-soft">Anonymous Feedback Forum</h2>
-          <p class="mt-1 text-sm sm:text-base text-ascend-muted">Share ideas without names or login. The feed is staff-only — unlock with the staff password to view posts.</p>
-        </div>
-
-        <form id="feedback-form" class="surface-card p-4 sm:p-6 mb-6 sm:mb-8">
-          <div class="grid gap-4">
-            <div>
-              <label for="feedback-category" class="block text-sm font-semibold text-white mb-1.5">Category</label>
-              <select id="feedback-category" required class="touch-field surface-field w-full rounded-xl px-4 py-3">
-                <option value="">Select a category…</option>
-                <option value="Facilities">Facilities</option>
-                <option value="Academics">Academics</option>
-                <option value="General">General</option>
-                <option value="Cafeteria">Cafeteria</option>
-                <option value="Transport">Transport</option>
-              </select>
-            </div>
-            <div>
-              <label for="feedback-message" class="block text-sm font-semibold text-white mb-1.5">Your message</label>
-              <textarea id="feedback-message" required rows="4" maxlength="800" placeholder="Write your feedback…" class="touch-field surface-field w-full rounded-xl px-4 py-3 resize-y min-h-[120px]"></textarea>
-              <p class="mt-1 text-xs text-ascend-muted">Posts are anonymous. Do not include personal details. Only staff can read the feed.</p>
-            </div>
-          </div>
-          <div class="mt-4 flex justify-stretch sm:justify-end">
-            <button type="submit" class="btn-primary w-full sm:w-auto rounded-xl px-6 py-3.5 sm:py-3 font-semibold min-h-12">
-              Submit anonymously
-            </button>
-          </div>
-        </form>
-
-        <div id="feedback-locked" class="surface-card border-dashed px-6 py-10 text-center">
-          <p class="text-ascend-mist font-medium">Feedback is hidden from students.</p>
-          <p class="mt-1 text-sm text-ascend-muted">Teachers and staff can unlock this feed with the staff password.</p>
-          <button type="button" id="feedback-unlock-btn" class="btn-primary mt-4 rounded-xl px-5 py-3 font-semibold min-h-11">
-            Unlock feed
-          </button>
-        </div>
-
-        <div id="feedback-unlocked" class="hidden" hidden>
-          <div id="feedback-feed" class="space-y-3" aria-live="polite"></div>
-          <p id="feedback-empty" class="hidden surface-card border-dashed px-6 py-10 text-center text-ascend-muted">
-            No feedback yet — be the first to post.
-          </p>
-        </div>
-      </section>
     </main>
 
     <nav class="bottom-nav" role="tablist" aria-label="Main sections">
-      <span id="tab-ink" class="tab-ink" aria-hidden="true"></span>
       <button type="button" role="tab" id="tab-absences" aria-controls="panel-absences" aria-selected="true" data-tab="absences" class="tab-btn tab-active">
         <span aria-hidden="true">📢</span>
         <span class="tab-label-short">Alerts</span>
@@ -234,11 +176,6 @@
         <span aria-hidden="true">📅</span>
         <span class="tab-label-short">Timetable</span>
         <span class="tab-label-full">Timetable Assistant</span>
-      </button>
-      <button type="button" role="tab" id="tab-feedback" aria-controls="panel-feedback" aria-selected="false" data-tab="feedback" class="tab-btn">
-        <span aria-hidden="true">💬</span>
-        <span class="tab-label-short">Feedback</span>
-        <span class="tab-label-full">Feedback Forum</span>
       </button>
     </nav>
   </div>
