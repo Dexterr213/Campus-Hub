@@ -1,30 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Ascend arrow">
-  <defs>
-    <linearGradient id="goldBody" x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFF3C4"/>
-      <stop offset="22%" stop-color="#F5D76E"/>
-      <stop offset="48%" stop-color="#D4A017"/>
-      <stop offset="72%" stop-color="#B8860B"/>
-      <stop offset="100%" stop-color="#8B6914"/>
-    </linearGradient>
-    <linearGradient id="goldSheen" x1="20" y1="6" x2="44" y2="58" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.55"/>
-      <stop offset="35%" stop-color="#FFFFFF" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#3b2100" flood-opacity="0.35"/>
-    </filter>
-  </defs>
-  <!-- Bold rounded upward arrow -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" aria-hidden="true">
+  <!-- Thick rounded Ascend arrow pointing up-right -->
   <path
-    filter="url(#softShadow)"
-    fill="url(#goldBody)"
-    d="M32 6.5c1.1 0 2.1.5 2.8 1.3l18.2 21.4c1.5 1.8.2 4.5-2.1 4.5h-8.1v21.3c0 2-1.6 3.5-3.5 3.5H24.7c-1.9 0-3.5-1.5-3.5-3.5V33.7h-8.1c-2.3 0-3.6-2.7-2.1-4.5L29.2 7.8c.7-.8 1.7-1.3 2.8-1.3z"
-  />
-  <path
-    fill="url(#goldSheen)"
-    d="M32 6.5c1.1 0 2.1.5 2.8 1.3l18.2 21.4c1.5 1.8.2 4.5-2.1 4.5h-8.1v21.3c0 2-1.6 3.5-3.5 3.5H24.7c-1.9 0-3.5-1.5-3.5-3.5V33.7h-8.1c-2.3 0-3.6-2.7-2.1-4.5L29.2 7.8c.7-.8 1.7-1.3 2.8-1.3z"
-    opacity="0.85"
+    fill="#FFE500"
+    d="M13.2 40.8c0-2.65 2.15-4.8 4.8-4.8H28V25c0-2.65 2.15-4.8 4.8-4.8h2.4c2.65 0 4.8 2.15 4.8 4.8v4.34L52.34 16.2c1.87-1.87 4.9-1.87 6.77 0 1.87 1.87 1.87 4.9 0 6.77L46.77 35.3H51.2c2.65 0 4.8 2.15 4.8 4.8v2.4c0 2.65-2.15 4.8-4.8 4.8H40v11.2c0 2.65-2.15 4.8-4.8 4.8h-2.4c-2.65 0-4.8-2.15-4.8-4.8V45.2H18c-2.65 0-4.8-2.15-4.8-4.8v-.4z"
+    transform="rotate(-45 34 34) translate(-2 1)"
   />
 </svg>

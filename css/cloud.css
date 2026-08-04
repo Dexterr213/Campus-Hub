@@ -6,17 +6,17 @@
 }
 
 .cloud-status--live {
-  background: rgba(196, 181, 253, 0.12);
-  color: #c4b5fd;
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
 }
 
 .cloud-status--warn {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   color: #94a3b8;
 }
 
 .notify-btn.notify-btn--on {
-  background: #c4b5fd !important;
-  color: #1b0a3e !important;
-  box-shadow: 0 0 0 2px rgba(196, 181, 253, 0.35), 0 8px 24px rgba(196, 181, 253, 0.25);
+  background: #34d399 !important;
+  color: #06241a !important;
+  box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.3), 0 8px 24px rgba(52, 211, 153, 0.2);
 }
