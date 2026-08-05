@@ -202,7 +202,18 @@
       <form id="auth-form" class="space-y-4">
         <div>
           <label for="staff-password" class="block text-sm font-semibold text-white mb-1.5">Password</label>
-          <input id="staff-password" type="password" required autocomplete="current-password" class="touch-field surface-field w-full rounded-xl px-4 py-3" />
+          <div class="password-field">
+            <input id="staff-password" type="password" required autocomplete="current-password" class="touch-field surface-field w-full rounded-xl px-4 py-3 pr-12" />
+            <button type="button" id="toggle-password" class="password-toggle" aria-label="Show password" aria-pressed="false">
+              <svg class="password-icon-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              </svg>
+              <svg class="password-icon-hide hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+              </svg>
+            </button>
+          </div>
           <p id="auth-error" class="hidden mt-2 text-sm text-ascend-accent" role="alert">Incorrect password. Try again.</p>
         </div>
         <div class="flex flex-col-reverse sm:flex-row justify-end gap-2">
@@ -246,8 +257,18 @@
           </div>
         </div>
         <div>
-          <label for="abs-cover" class="block text-sm font-semibold text-white mb-1.5">Cover / instructions <span class="font-normal text-ascend-muted">(optional)</span></label>
-          <textarea id="abs-cover" rows="2" class="touch-field surface-field w-full rounded-xl px-4 py-3 resize-y"></textarea>
+          <label for="abs-cover" class="block text-sm font-semibold text-white mb-1.5">Cover / reason <span class="font-normal text-ascend-muted">(optional)</span></label>
+          <select id="abs-cover" class="touch-field surface-field w-full rounded-xl px-4 py-3">
+            <option value="">Select a reason</option>
+            <option value="Feeling Unwell">Feeling Unwell</option>
+            <option value="Medical Appointment">Medical Appointment</option>
+            <option value="Personal / Family Emergency">Personal / Family Emergency</option>
+            <option value="__other__">Other</option>
+          </select>
+          <div id="abs-cover-other-wrap" class="mt-3 hidden">
+            <label for="abs-cover-other" class="block text-sm font-semibold text-white mb-1.5">Please specify</label>
+            <input id="abs-cover-other" type="text" maxlength="200" placeholder="Enter reason" class="touch-field surface-field w-full rounded-xl px-4 py-3" />
+          </div>
         </div>
         <div class="flex items-center gap-2 min-h-11">
           <input id="abs-urgent" type="checkbox" class="h-5 w-5 rounded border-white/20 text-ascend-accent focus:ring-ascend-accent bg-white/10" />

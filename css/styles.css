@@ -81,6 +81,44 @@ button {
   color: #fff;
 }
 
+.password-field {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.55rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--ascend-muted);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.password-toggle:hover,
+.password-toggle:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+}
+
+.password-toggle:focus-visible {
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35);
+}
+
+.password-toggle svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
 .surface-btn {
   border: 1px solid rgba(6, 78, 59, 0.35);
   background: rgba(255, 255, 255, 0.05);

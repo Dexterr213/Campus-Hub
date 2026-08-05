@@ -63,9 +63,13 @@ const els = {
   authError: document.getElementById('auth-error'),
   authDesc: document.getElementById('auth-modal-desc'),
   staffPassword: document.getElementById('staff-password'),
+  togglePassword: document.getElementById('toggle-password'),
   absenceForm: document.getElementById('absence-form'),
   absBatch: document.getElementById('abs-batch'),
   absDate: document.getElementById('abs-date'),
+  absCover: document.getElementById('abs-cover'),
+  absCoverOtherWrap: document.getElementById('abs-cover-other-wrap'),
+  absCoverOther: document.getElementById('abs-cover-other'),
   toast: document.getElementById('toast')
 };
 
@@ -233,7 +237,23 @@ function updateStaffUi() {
   }
 }
 
+function setPasswordVisible(visible) {
+  if (!els.staffPassword || !els.togglePassword) return;
+  els.staffPassword.type = visible ? 'text' : 'password';
+  els.togglePassword.setAttribute('aria-pressed', visible ? 'true' : 'false');
+  els.togglePassword.setAttribute('aria-label', visible ? 'Hide password' : 'Show password');
+  const showIcon = els.togglePassword.querySelector('.password-icon-show');
+  const hideIcon = els.togglePassword.querySelector('.password-icon-hide');
+  showIcon?.classList.toggle('hidden', visible);
+  hideIcon?.classList.toggle('hidden', !visible);
+}
+
 function setupAuth() {
+  els.togglePassword?.addEventListener('click', () => {
+    const showing = els.staffPassword.type === 'text';
+    setPasswordVisible(!showing);
+  });
+
   els.authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const entered = els.staffPassword.value;
@@ -302,6 +322,7 @@ function requireStaff(action, description) {
   if (els.authDesc) els.authDesc.textContent = description;
   els.authError.classList.add('hidden');
   els.authForm.reset();
+  setPasswordVisible(false);
   els.authModal.hidden = false;
   els.authModal.classList.remove('hidden');
   els.staffPassword.focus();
@@ -312,6 +333,7 @@ function closeAuthModal() {
   els.authModal.classList.add('hidden');
   els.authError.classList.add('hidden');
   els.authForm.reset();
+  setPasswordVisible(false);
 }
 
 /* —— Batch landing —— */
@@ -559,6 +581,23 @@ function renderAbsences(opts = {}) {
 
 /* —— Admin modal —— */
 
+function syncCoverOtherField() {
+  const isOther = els.absCover?.value === '__other__';
+  els.absCoverOtherWrap?.classList.toggle('hidden', !isOther);
+  if (els.absCoverOther) {
+    els.absCoverOther.required = isOther;
+    if (!isOther) els.absCoverOther.value = '';
+  }
+}
+
+function getCoverValue() {
+  const selected = els.absCover?.value || '';
+  if (selected === '__other__') {
+    return String(els.absCoverOther?.value || '').trim();
+  }
+  return selected;
+}
+
 function setupAdminModal() {
   BATCHES.forEach((b) => {
     const opt = document.createElement('option');
@@ -566,6 +605,8 @@ function setupAdminModal() {
     opt.textContent = b;
     els.absBatch.appendChild(opt);
   });
+
+  els.absCover?.addEventListener('change', syncCoverOtherField);
 
   els.adminBtn.addEventListener('click', () => {
     requireStaff('publish', 'Enter the staff password to publish absence notices.');
@@ -582,12 +623,19 @@ function setupAdminModal() {
       requireStaff('publish', 'Enter the staff password to publish absence notices.');
       return;
     }
+
+    const cover = getCoverValue();
+    if (els.absCover?.value === '__other__' && !cover) {
+      showToast('Please specify the cover reason');
+      els.absCoverOther?.focus();
+      return;
+    }
+
     try {
       const teacher = document.getElementById('abs-teacher').value;
       const subject = document.getElementById('abs-subject').value;
       const batch = document.getElementById('abs-batch').value;
       const date = document.getElementById('abs-date').value;
-      const cover = document.getElementById('abs-cover').value;
       const urgent = document.getElementById('abs-urgent').checked;
 
       await publishAbsence({
@@ -602,6 +650,7 @@ function setupAdminModal() {
       await triggerDiscordAlert({ teacher, subject, batch, date, notes: cover, urgent });
       closeAdminModal();
       els.absenceForm.reset();
+      syncCoverOtherField();
       showToast('Published for everyone');
       if (currentBatch) renderAbsences();
     } catch (err) {
@@ -620,6 +669,7 @@ function setupAdminModal() {
 function openAdminModal() {
   els.absDate.value = toISODate(new Date());
   if (currentBatch) els.absBatch.value = currentBatch;
+  syncCoverOtherField();
   els.adminModal.hidden = false;
   els.adminModal.classList.remove('hidden');
   document.getElementById('abs-teacher').focus();
@@ -628,6 +678,8 @@ function openAdminModal() {
 function closeAdminModal() {
   els.adminModal.hidden = true;
   els.adminModal.classList.add('hidden');
+  els.absenceForm?.reset();
+  syncCoverOtherField();
 }
 
 /* —— Timetable assistant (structured picks, no typing) —— */
