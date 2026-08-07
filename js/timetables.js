@@ -7,6 +7,21 @@ import { cloudEnabled, supabase } from './db.js';
 export const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 export const UPDATED_BADGE_MS = 7 * 24 * 60 * 60 * 1000;
 
+/** Fixed period times for the staff timetable editor. */
+export const TIME_SLOT_OPTIONS = [
+  '08:00 - 09:30',
+  '09:30 - 11:00',
+  '11:00 - 12:30',
+  '13:00 - 14:30',
+  '14:30 - 16:00'
+];
+
+/** Next unused fixed time slot, or the first option if all are taken. */
+export function nextAvailableTimeSlot(usedTimes = []) {
+  const used = new Set((usedTimes || []).filter(Boolean));
+  return TIME_SLOT_OPTIONS.find((t) => !used.has(t)) || TIME_SLOT_OPTIONS[0];
+}
+
 function emptyWeek() {
   return Object.fromEntries(WEEKDAYS.map((d) => [d, []]));
 }

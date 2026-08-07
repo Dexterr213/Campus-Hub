@@ -24,7 +24,9 @@ import {
   loadMergedTimetables,
   saveTimetableDay,
   slotFingerprint,
-  WEEKDAYS
+  WEEKDAYS,
+  TIME_SLOT_OPTIONS,
+  nextAvailableTimeSlot
 } from './timetables.js';
 import {
   enableNotifications,
@@ -760,8 +762,9 @@ function setupTimetableEditor() {
 
   els.ttEditAddSlot?.addEventListener('click', () => {
     if (!ttEditDraft) return;
+    const time = nextAvailableTimeSlot(ttEditDraft.slots.map((s) => s.time));
     ttEditDraft.slots.push({
-      time: '',
+      time,
       subject: '',
       room: '',
       teacher: '',
@@ -772,7 +775,7 @@ function setupTimetableEditor() {
     renderTimetableEditorSlots();
   });
 
-  els.ttEditSlots?.addEventListener('input', (e) => {
+  const syncSlotField = (e) => {
     const input = e.target.closest('[data-field]');
     if (!input || !ttEditDraft) return;
     const card = input.closest('[data-slot-index]');
@@ -782,7 +785,10 @@ function setupTimetableEditor() {
     if (!slot) return;
     slot[input.dataset.field] = input.value;
     slot.dirty = slot.originalFingerprint == null || slotFingerprint(slot) !== slot.originalFingerprint;
-  });
+  };
+
+  els.ttEditSlots?.addEventListener('input', syncSlotField);
+  els.ttEditSlots?.addEventListener('change', syncSlotField);
 
   els.ttEditSlots?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-remove-slot]');
@@ -830,17 +836,40 @@ function closeTimetableEditor() {
 
 function loadTimetableEditorDay(day) {
   const week = timetables?.[currentBatch] || {};
-  const slots = (week[day] || []).map((s) => ({
-    time: s.time || '',
-    subject: s.subject || '',
-    room: s.room || '',
-    teacher: s.teacher || '',
-    updatedAt: s.updatedAt || s.updated_at || null,
-    originalFingerprint: slotFingerprint(s),
-    dirty: false
-  }));
+  const slots = (week[day] || []).map((s) => {
+    const time = TIME_SLOT_OPTIONS.includes(s.time) ? s.time : '';
+    const slot = {
+      time,
+      subject: s.subject || '',
+      room: s.room || '',
+      teacher: s.teacher || '',
+      updatedAt: s.updatedAt || s.updated_at || null,
+      originalFingerprint: null,
+      dirty: false
+    };
+    slot.originalFingerprint = slotFingerprint({
+      time: s.time || '',
+      subject: s.subject || '',
+      room: s.room || '',
+      teacher: s.teacher || ''
+    });
+    // If legacy time isn't in the fixed list, force a re-pick before save stays clean only if remapped
+    if (!time && (s.time || '')) slot.dirty = true;
+    return slot;
+  });
   ttEditDraft = { day, slots };
   renderTimetableEditorSlots();
+}
+
+function timeSlotOptionsHtml(selected) {
+  const options = TIME_SLOT_OPTIONS.map(
+    (t) =>
+      `<option value="${escapeHtml(t)}" ${t === selected ? 'selected' : ''}>${escapeHtml(t)}</option>`
+  );
+  if (!selected) {
+    options.unshift('<option value="" selected disabled>Select time</option>');
+  }
+  return options.join('');
 }
 
 function renderTimetableEditorSlots() {
@@ -859,7 +888,9 @@ function renderTimetableEditorSlots() {
       <div class="tt-edit-grid">
         <div>
           <label for="tt-slot-time-${index}">Time</label>
-          <input id="tt-slot-time-${index}" data-field="time" value="${escapeHtml(slot.time)}" placeholder="08:00 - 09:30" class="touch-field surface-field w-full rounded-lg px-3 py-2.5" />
+          <select id="tt-slot-time-${index}" data-field="time" required class="touch-field surface-field w-full rounded-xl px-4 py-3">
+            ${timeSlotOptionsHtml(slot.time)}
+          </select>
         </div>
         <div>
           <label for="tt-slot-subject-${index}">Subject</label>
@@ -896,9 +927,14 @@ async function saveTimetableEditor() {
     previousUpdatedAt: s.updatedAt || null
   }));
 
-  const blank = slots.filter((s) => !s.time && !s.subject);
+  if (slots.some((s) => !TIME_SLOT_OPTIONS.includes(s.time))) {
+    showToast('Pick a time slot for every period');
+    return;
+  }
+
+  const blank = slots.filter((s) => !s.subject);
   if (blank.length) {
-    showToast('Fill in time and subject, or remove empty periods');
+    showToast('Fill in subject, or remove empty periods');
     return;
   }
 
