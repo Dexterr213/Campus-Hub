@@ -37,3 +37,5 @@ begin
   alter publication supabase_realtime add table public.absences;
 exception when duplicate_object then null;
 end $$;
+
+-- Also run supabase/timetable-slots.sql for staff-editable timetables + Updated badges.

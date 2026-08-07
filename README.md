@@ -24,13 +24,17 @@ Redeploy after saving env vars.
 |-------|---------|
 | `POST /api/verify-staff` | Check staff password (unlock UI) |
 | `POST /api/publish-absence` | Password check + insert absence in Supabase |
+| `POST /api/save-timetable-day` | Password check + save one weekday of timetable slots |
 | `POST /api/discord-alert` | Send Discord embed (webhook only on server) |
 
 ## Supabase setup
 
-1. Run `supabase/schema.sql` once  
-2. *(Recommended)* Run `supabase/lock-absence-inserts.sql` so browsers can no longer insert absences directly  
-3. Keep anon key in `js/supabase-config.js` for **read + realtime** only  
+1. Run `supabase/schema.sql` once (absences)  
+2. Run `supabase/timetable-slots.sql` once (editable timetable + `updated_at` badges)  
+3. *(Recommended)* Run `supabase/lock-absence-inserts.sql` so browsers can no longer insert absences directly  
+4. Keep anon key in `js/supabase-config.js` for **read + realtime** only  
+
+Staff **Edit Timetable** (unlocked Staff mode) writes through `/api/save-timetable-day`. Slots edited in the last 7 days show an **Updated** badge on the student timetable view.
 
 ## Deploy
 

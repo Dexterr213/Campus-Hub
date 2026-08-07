@@ -509,6 +509,46 @@ body.has-batch .batch-picker .batch-card {
   font-size: 0.95rem;
   color: #fff;
   animation: rise-in 0.4s var(--ease-out) both;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.tt-result-row.is-updated {
+  border-color: rgba(52, 211, 153, 0.55);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2), 0 0 18px rgba(16, 185, 129, 0.12);
+}
+
+.tt-result-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.tt-updated-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #042f1e;
+  background: linear-gradient(135deg, #34d399, #10b981);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+  50% { transform: scale(1.04); box-shadow: 0 0 16px rgba(52, 211, 153, 0.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tt-updated-badge { animation: none; }
 }
 
 .tt-result-day {
@@ -525,6 +565,67 @@ body.has-batch .batch-picker .batch-card {
   list-style: none;
   padding: 0;
   margin: 0;
+}
+
+.tt-edit-slots {
+  max-height: min(50vh, 28rem);
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+.tt-edit-card {
+  border: 1px solid rgba(6, 78, 59, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 0.9rem;
+  padding: 0.85rem;
+}
+
+.tt-edit-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.tt-edit-card-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ascend-mint);
+}
+
+.tt-edit-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+@media (min-width: 640px) {
+  .tt-edit-grid {
+    grid-template-columns: 1.1fr 1.2fr;
+  }
+}
+
+.tt-edit-grid label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ascend-muted);
+  margin-bottom: 0.25rem;
+}
+
+.tt-edit-remove {
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fca5a5;
+  border-radius: 0.55rem;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tt-edit-remove:hover {
+  background: rgba(248, 113, 113, 0.15);
 }
 
 .modal-root {

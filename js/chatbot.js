@@ -1,12 +1,9 @@
 /**
  * Structured timetable queries — no free-text parsing.
- * Timetable JSON shape:
- * {
- *   "A Level Batch 2": {
- *     "Monday": [{ "time": "08:00 - 09:30", "subject": "Mechanics", "room": "", "teacher": "" }]
- *   }
- * }
+ * Slot shape: { time, subject, room, teacher, updatedAt? }
  */
+
+import { isRecentlyUpdated } from './timetables.js';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -37,7 +34,6 @@ export function createTimetableAssistant(timetables, batch) {
     },
     /**
      * @param {{ mode: 'day' | 'week', dayValue?: string }} query
-     * @returns {{ title: string, lines: string[], empty: boolean, sections?: { day: string, lines: string[] }[] }}
      */
     query(query) {
       const batchData = timetables?.[batch];
@@ -45,6 +41,7 @@ export function createTimetableAssistant(timetables, batch) {
         return {
           title: 'No timetable',
           lines: [`No timetable is loaded for ${batch} yet.`],
+          slots: [],
           empty: true
         };
       }
@@ -55,10 +52,10 @@ export function createTimetableAssistant(timetables, batch) {
 
       if (query.mode === 'day') {
         const day = resolveDayValue(query.dayValue);
-        return toResult(formatDaySchedule(batchData, day), day);
+        return formatDayResult(batchData, day);
       }
 
-      return { title: 'Choose an option', lines: ['Select a full day or the full week.'], empty: true };
+      return { title: 'Choose an option', lines: ['Select a full day or the full week.'], slots: [], empty: true };
     }
   };
 }
@@ -69,12 +66,13 @@ function formatFullWeek(batchData) {
   let anySlots = false;
 
   for (const day of WEEKDAYS) {
-    const slots = batchData[day] || [];
+    const raw = batchData[day] || [];
+    const slots = raw.map(normalizeSlot);
     const dayLines = slots.length
       ? slots.map((s) => formatSlot(s))
       : ['No periods listed'];
     if (slots.length) anySlots = true;
-    sections.push({ day, lines: dayLines });
+    sections.push({ day, lines: dayLines, slots });
     lines.push(`${day}`);
     dayLines.forEach((l) => lines.push(l));
   }
@@ -94,27 +92,47 @@ function resolveDayValue(dayValue) {
   return DAYS[new Date().getDay()];
 }
 
-function toResult(text, title) {
-  const lines = String(text)
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
-  const empty = lines.length === 0 || /no periods|no class|enjoy the break|not listed/i.test(lines.join(' '));
-  return { title, lines: lines.length ? lines : ['Nothing scheduled.'], empty };
-}
-
-function formatDaySchedule(batchData, day) {
+function formatDayResult(batchData, day) {
   if (day === 'Saturday' || day === 'Sunday') {
-    return `It's ${day} — enjoy the break!`;
+    return {
+      title: day,
+      lines: [`It's ${day} — enjoy the break!`],
+      slots: [],
+      empty: true
+    };
   }
-  const slots = batchData[day] || [];
+
+  const slots = (batchData[day] || []).map(normalizeSlot);
   if (!slots.length) {
-    return `No periods listed for ${day} yet.`;
+    return {
+      title: day,
+      lines: [`No periods listed for ${day} yet.`],
+      slots: [],
+      empty: true
+    };
   }
-  return slots.map((s) => `• ${formatSlot(s)}`).join('\n');
+
+  return {
+    title: day,
+    lines: slots.map((s) => `• ${formatSlot(s)}`),
+    slots,
+    empty: false
+  };
 }
 
-function formatSlot(slot) {
+function normalizeSlot(slot) {
+  return {
+    id: slot.id || null,
+    time: slot.time || '',
+    subject: slot.subject || '',
+    room: slot.room || '',
+    teacher: slot.teacher || '',
+    updatedAt: slot.updatedAt || slot.updated_at || null,
+    recentlyUpdated: isRecentlyUpdated(slot.updatedAt || slot.updated_at || null)
+  };
+}
+
+export function formatSlot(slot) {
   const bits = [slot.time, slot.subject];
   if (slot.room) bits.push(slot.room);
   if (slot.teacher) bits.push(slot.teacher);

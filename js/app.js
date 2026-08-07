@@ -17,9 +17,15 @@ import {
   seedDemoAbsencesIfEmpty,
   subscribeAbsences
 } from './absences.js';
-import { createTimetableAssistant } from './chatbot.js';
+import { createTimetableAssistant, formatSlot } from './chatbot.js';
 import { STAFF_SESSION_KEY } from './config.js';
 import { cloudEnabled } from './db.js';
+import {
+  loadMergedTimetables,
+  saveTimetableDay,
+  slotFingerprint,
+  WEEKDAYS
+} from './timetables.js';
 import {
   enableNotifications,
   disableNotifications,
@@ -55,6 +61,15 @@ const els = {
   ttResultsTitle: document.getElementById('tt-results-title'),
   ttResultsList: document.getElementById('tt-results-list'),
   ttResultsEmpty: document.getElementById('tt-results-empty'),
+  editTimetableBtn: document.getElementById('edit-timetable-btn'),
+  ttEditModal: document.getElementById('tt-edit-modal'),
+  ttEditForm: document.getElementById('tt-edit-form'),
+  ttEditDay: document.getElementById('tt-edit-day'),
+  ttEditSlots: document.getElementById('tt-edit-slots'),
+  ttEditEmpty: document.getElementById('tt-edit-empty'),
+  ttEditAddSlot: document.getElementById('tt-edit-add-slot'),
+  ttEditBatchLabel: document.getElementById('tt-edit-batch-label'),
+  ttEditSave: document.getElementById('tt-edit-save'),
   adminBtn: document.getElementById('admin-toggle-btn'),
   staffLockBtn: document.getElementById('staff-lock-btn'),
   adminModal: document.getElementById('admin-modal'),
@@ -77,11 +92,13 @@ let currentBatch = '';
 let timetables = {};
 let bot = null;
 let toastTimer = null;
-/** @type {null | 'publish'} */
+/** @type {null | 'publish' | 'edit-timetable'} */
 let pendingAuthAction = null;
 let unsubAbsences = null;
 /** Staff password kept in memory only after /api/verify-staff succeeds. */
 let staffPasswordSession = '';
+/** @type {{ day: string, slots: object[] } | null} */
+let ttEditDraft = null;
 
 init();
 
@@ -98,6 +115,7 @@ async function init() {
   setupAuth();
   setupAdminModal();
   setupTimetableAssistant();
+  setupTimetableEditor();
   setupLiveSync();
   setupFlashyFx();
   setupNotifyUi();
@@ -199,10 +217,7 @@ function setupNotifyUi() {
 
 async function loadTimetables() {
   try {
-    const res = await fetch('data/timetables.json', { cache: 'no-store' });
-    if (res.ok) {
-      timetables = await res.json();
-    }
+    timetables = await loadMergedTimetables(BATCHES);
   } catch {
     timetables = Object.fromEntries(
       BATCHES.map((b) => [
@@ -211,6 +226,15 @@ async function loadTimetables() {
       ])
     );
   }
+}
+
+function rebuildTimetableAssistant() {
+  if (!currentBatch) {
+    bot = null;
+    return;
+  }
+  bot = createTimetableAssistant(timetables, currentBatch);
+  refreshTimetableControls();
 }
 
 /* —— Staff auth —— */
@@ -234,6 +258,10 @@ function updateStaffUi() {
   const unlocked = isStaffUnlocked();
   if (els.staffLockBtn) {
     els.staffLockBtn.classList.toggle('hidden', !unlocked);
+  }
+  if (els.editTimetableBtn) {
+    els.editTimetableBtn.classList.toggle('hidden', !unlocked);
+    els.editTimetableBtn.hidden = !unlocked;
   }
 }
 
@@ -284,6 +312,7 @@ function setupAuth() {
       const action = pendingAuthAction;
       pendingAuthAction = null;
       if (action === 'publish') openAdminModal();
+      if (action === 'edit-timetable') openTimetableEditor();
     } catch (err) {
       console.error(err);
       showToast('Staff verify failed — use the Vercel site URL');
@@ -307,6 +336,8 @@ function setupAuth() {
     if (!els.authModal.hidden) {
       pendingAuthAction = null;
       closeAuthModal();
+    } else if (els.ttEditModal && !els.ttEditModal.hidden) {
+      closeTimetableEditor();
     } else if (!els.adminModal.hidden) {
       closeAdminModal();
     }
@@ -316,6 +347,7 @@ function setupAuth() {
 function requireStaff(action, description) {
   if (isStaffUnlocked()) {
     if (action === 'publish') openAdminModal();
+    if (action === 'edit-timetable') openTimetableEditor();
     return;
   }
   pendingAuthAction = action;
@@ -707,6 +739,216 @@ function setupTimetableAssistant() {
   });
 }
 
+function setupTimetableEditor() {
+  if (!els.editTimetableBtn || !els.ttEditModal) return;
+
+  els.editTimetableBtn.addEventListener('click', () => {
+    if (!currentBatch) {
+      showToast('Pick a batch first');
+      return;
+    }
+    requireStaff('edit-timetable', 'Enter the staff password to edit the timetable.');
+  });
+
+  els.ttEditModal.querySelectorAll('[data-close-tt-edit]').forEach((el) => {
+    el.addEventListener('click', () => closeTimetableEditor());
+  });
+
+  els.ttEditDay?.addEventListener('change', () => {
+    loadTimetableEditorDay(els.ttEditDay.value);
+  });
+
+  els.ttEditAddSlot?.addEventListener('click', () => {
+    if (!ttEditDraft) return;
+    ttEditDraft.slots.push({
+      time: '',
+      subject: '',
+      room: '',
+      teacher: '',
+      updatedAt: null,
+      originalFingerprint: null,
+      dirty: true
+    });
+    renderTimetableEditorSlots();
+  });
+
+  els.ttEditSlots?.addEventListener('input', (e) => {
+    const input = e.target.closest('[data-field]');
+    if (!input || !ttEditDraft) return;
+    const card = input.closest('[data-slot-index]');
+    if (!card) return;
+    const index = Number(card.dataset.slotIndex);
+    const slot = ttEditDraft.slots[index];
+    if (!slot) return;
+    slot[input.dataset.field] = input.value;
+    slot.dirty = slot.originalFingerprint == null || slotFingerprint(slot) !== slot.originalFingerprint;
+  });
+
+  els.ttEditSlots?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-slot]');
+    if (!btn || !ttEditDraft) return;
+    const index = Number(btn.dataset.removeSlot);
+    ttEditDraft.slots.splice(index, 1);
+    renderTimetableEditorSlots();
+  });
+
+  els.ttEditForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveTimetableEditor();
+  });
+}
+
+function openTimetableEditor() {
+  if (!currentBatch) {
+    showToast('Pick a batch first');
+    return;
+  }
+  if (!cloudEnabled) {
+    showToast('Supabase is required to edit timetables');
+    return;
+  }
+
+  if (els.ttEditBatchLabel) els.ttEditBatchLabel.textContent = currentBatch;
+  const todayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+    new Date().getDay()
+  ];
+  const startDay = WEEKDAYS.includes(todayName) ? todayName : 'Monday';
+  if (els.ttEditDay) els.ttEditDay.value = startDay;
+  loadTimetableEditorDay(startDay);
+
+  els.ttEditModal.hidden = false;
+  els.ttEditModal.classList.remove('hidden');
+}
+
+function closeTimetableEditor() {
+  if (!els.ttEditModal) return;
+  els.ttEditModal.hidden = true;
+  els.ttEditModal.classList.add('hidden');
+  ttEditDraft = null;
+  if (els.ttEditSlots) els.ttEditSlots.innerHTML = '';
+}
+
+function loadTimetableEditorDay(day) {
+  const week = timetables?.[currentBatch] || {};
+  const slots = (week[day] || []).map((s) => ({
+    time: s.time || '',
+    subject: s.subject || '',
+    room: s.room || '',
+    teacher: s.teacher || '',
+    updatedAt: s.updatedAt || s.updated_at || null,
+    originalFingerprint: slotFingerprint(s),
+    dirty: false
+  }));
+  ttEditDraft = { day, slots };
+  renderTimetableEditorSlots();
+}
+
+function renderTimetableEditorSlots() {
+  if (!els.ttEditSlots || !ttEditDraft) return;
+  const { slots } = ttEditDraft;
+  els.ttEditEmpty?.classList.toggle('hidden', slots.length > 0);
+
+  els.ttEditSlots.innerHTML = slots
+    .map(
+      (slot, index) => `
+    <div class="tt-edit-card" data-slot-index="${index}">
+      <div class="tt-edit-card-head">
+        <span class="tt-edit-card-title">Period ${index + 1}</span>
+        <button type="button" class="tt-edit-remove" data-remove-slot="${index}">Remove</button>
+      </div>
+      <div class="tt-edit-grid">
+        <div>
+          <label for="tt-slot-time-${index}">Time</label>
+          <input id="tt-slot-time-${index}" data-field="time" value="${escapeHtml(slot.time)}" placeholder="08:00 - 09:30" class="touch-field surface-field w-full rounded-lg px-3 py-2.5" />
+        </div>
+        <div>
+          <label for="tt-slot-subject-${index}">Subject</label>
+          <input id="tt-slot-subject-${index}" data-field="subject" value="${escapeHtml(slot.subject)}" placeholder="Subject" class="touch-field surface-field w-full rounded-lg px-3 py-2.5" />
+        </div>
+        <div>
+          <label for="tt-slot-room-${index}">Room</label>
+          <input id="tt-slot-room-${index}" data-field="room" value="${escapeHtml(slot.room)}" placeholder="Optional" class="touch-field surface-field w-full rounded-lg px-3 py-2.5" />
+        </div>
+        <div>
+          <label for="tt-slot-teacher-${index}">Teacher</label>
+          <input id="tt-slot-teacher-${index}" data-field="teacher" value="${escapeHtml(slot.teacher)}" placeholder="Optional" class="touch-field surface-field w-full rounded-lg px-3 py-2.5" />
+        </div>
+      </div>
+    </div>`
+    )
+    .join('');
+}
+
+async function saveTimetableEditor() {
+  if (!ttEditDraft || !currentBatch) return;
+  if (!isStaffUnlocked() || !staffPasswordSession) {
+    requireStaff('edit-timetable', 'Enter the staff password to edit the timetable.');
+    return;
+  }
+
+  const day = els.ttEditDay?.value || ttEditDraft.day;
+  const slots = ttEditDraft.slots.map((s) => ({
+    time: String(s.time || '').trim(),
+    subject: String(s.subject || '').trim(),
+    room: String(s.room || '').trim(),
+    teacher: String(s.teacher || '').trim(),
+    markUpdated: Boolean(s.dirty) || s.originalFingerprint == null,
+    previousUpdatedAt: s.updatedAt || null
+  }));
+
+  const blank = slots.filter((s) => !s.time && !s.subject);
+  if (blank.length) {
+    showToast('Fill in time and subject, or remove empty periods');
+    return;
+  }
+
+  const week = timetables?.[currentBatch] || {};
+  const fullWeekSeed = Object.fromEntries(
+    WEEKDAYS.map((d) => [
+      d,
+      (week[d] || []).map((s) => ({
+        time: s.time || '',
+        subject: s.subject || '',
+        room: s.room || '',
+        teacher: s.teacher || '',
+        updatedAt: s.updatedAt || s.updated_at || null,
+        markUpdated: false,
+        previousUpdatedAt: s.updatedAt || s.updated_at || null
+      }))
+    ])
+  );
+
+  if (els.ttEditSave) els.ttEditSave.disabled = true;
+
+  try {
+    await saveTimetableDay({
+      password: staffPasswordSession,
+      batch: currentBatch,
+      day,
+      slots,
+      fullWeekSeed
+    });
+
+    await loadTimetables();
+    rebuildTimetableAssistant();
+    closeTimetableEditor();
+    showToast('Timetable updated successfully');
+
+    if (!els.ttResults?.hidden) runTimetableQuery();
+  } catch (err) {
+    console.error(err);
+    if (err?.code === 'UNAUTHORIZED') {
+      setStaffUnlocked(false);
+      showToast('Invalid staff password');
+      requireStaff('edit-timetable', 'Enter the staff password to edit the timetable.');
+      return;
+    }
+    showToast(err?.message || 'Could not save timetable — check Supabase table / Vercel env');
+  } finally {
+    if (els.ttEditSave) els.ttEditSave.disabled = false;
+  }
+}
+
 function refreshTimetableControls() {
   if (!bot || !els.ttDayOptions) return;
 
@@ -744,6 +986,21 @@ function runTimetableQuery() {
   renderTimetableResults(result);
 }
 
+function createTimetableResultRow(slotOrLine, stampDelay) {
+  const li = document.createElement('li');
+  const isSlot = slotOrLine && typeof slotOrLine === 'object' && ('subject' in slotOrLine || 'time' in slotOrLine);
+  const text = isSlot ? formatSlot(slotOrLine) : String(slotOrLine);
+  const recentlyUpdated = isSlot && slotOrLine.recentlyUpdated;
+
+  li.className = `tt-result-row${recentlyUpdated ? ' is-updated' : ''}`;
+  li.innerHTML = `
+    <span class="tt-result-main">${escapeHtml(text)}</span>
+    ${recentlyUpdated ? '<span class="tt-updated-badge" title="Changed in the last 7 days">Updated</span>' : ''}
+  `;
+  stampDelay(li);
+  return li;
+}
+
 function renderTimetableResults(result) {
   els.ttResults.hidden = false;
   els.ttResults.classList.remove('hidden');
@@ -767,12 +1024,10 @@ function renderTimetableResults(result) {
       heading.textContent = section.day;
       stampDelay(heading);
       els.ttResultsList.appendChild(heading);
-      section.lines.forEach((line) => {
-        const li = document.createElement('li');
-        li.className = 'tt-result-row';
-        li.textContent = line;
-        stampDelay(li);
-        els.ttResultsList.appendChild(li);
+
+      const sectionSlots = section.slots?.length ? section.slots : section.lines || [];
+      sectionSlots.forEach((item) => {
+        els.ttResultsList.appendChild(createTimetableResultRow(item, stampDelay));
       });
     });
     return;
@@ -780,8 +1035,9 @@ function renderTimetableResults(result) {
 
   const looksEmpty =
     result.empty ||
-    !result.lines?.length ||
-    result.lines.every((l) => /no .+|enjoy the break|no timetable/i.test(l));
+    (!result.slots?.length &&
+      (!result.lines?.length ||
+        result.lines.every((l) => /no .+|enjoy the break|no timetable/i.test(l))));
 
   if (looksEmpty) {
     els.ttResultsEmpty.classList.remove('hidden');
@@ -790,12 +1046,9 @@ function renderTimetableResults(result) {
   }
 
   els.ttResultsEmpty.classList.add('hidden');
-  result.lines.forEach((line) => {
-    const li = document.createElement('li');
-    li.className = 'tt-result-row';
-    li.textContent = line;
-    stampDelay(li);
-    els.ttResultsList.appendChild(li);
+  const items = result.slots?.length ? result.slots : result.lines;
+  items.forEach((item) => {
+    els.ttResultsList.appendChild(createTimetableResultRow(item, stampDelay));
   });
 }
 
