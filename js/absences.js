@@ -120,7 +120,7 @@ export function seedDemoAbsencesIfEmpty(batches) {
   if (cloudEnabled) return;
   if (loadAbsences().length) return;
   const today = toISODate(new Date());
-  const primary = batches[0] || 'Batch A';
+  const primary = batches[0] || 'A Level Batch 2';
   saveAbsences([
     {
       id: uid('abs'),
