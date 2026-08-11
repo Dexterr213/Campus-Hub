@@ -276,6 +276,8 @@ function updateStaffUi() {
     els.editTimetableBtn.hidden = !unlocked;
   }
   document.body.classList.toggle('staff-unlocked', unlocked);
+  // Refresh cards so Edit/Delete appear immediately after unlock
+  if (currentBatch) renderAbsences({ fromRealtime: true });
 }
 
 function setPasswordVisible(visible) {
@@ -319,13 +321,17 @@ function setupAuth() {
         return;
       }
 
+      const next = pendingAuthAction;
+      pendingAuthAction = null;
       setStaffUnlocked(true, entered);
       closeAuthModal();
-      showToast('Staff access unlocked');
-      const action = pendingAuthAction;
-      pendingAuthAction = null;
-      if (action === 'publish') openAdminModal();
-      if (action === 'edit-timetable') openTimetableEditor();
+      showToast(
+        next === 'publish'
+          ? 'Staff unlocked — close Publish, then use Edit/Delete on cards'
+          : 'Staff access unlocked'
+      );
+      if (next === 'publish') openAdminModal();
+      if (next === 'edit-timetable') openTimetableEditor();
     } catch (err) {
       console.error(err);
       showToast('Staff verify failed — use the Vercel site URL');
@@ -580,6 +586,7 @@ function renderAbsences(opts = {}) {
           card.className = `alert-card${a.urgent ? ' is-urgent' : ''}`;
           card.dataset.absenceId = a.id;
           const cover = String(a.cover || '').trim();
+          const staffOn = isStaffUnlocked();
           card.innerHTML = `
       <div class="alert-card-top">
         <div class="alert-card-heading">
@@ -598,7 +605,7 @@ function renderAbsences(opts = {}) {
         <p class="alert-body-label">Cover / reason</p>
         <p class="alert-body-text">${cover ? escapeHtml(cover) : 'No extra notes for this absence.'}</p>
       </div>
-      <div class="alert-card-actions">
+      <div class="alert-card-actions${staffOn ? ' is-visible' : ''}">
         <button type="button" class="alert-action-btn" data-absence-edit="${escapeHtml(a.id)}">Edit</button>
         <button type="button" class="alert-action-btn alert-action-btn--danger" data-absence-delete="${escapeHtml(a.id)}">Delete</button>
       </div>
@@ -706,6 +713,9 @@ function setupAdminModal() {
   els.absCover?.addEventListener('change', syncCoverOtherField);
 
   els.adminBtn.addEventListener('click', () => {
+    if (isStaffUnlocked() && currentBatch) {
+      renderAbsences({ fromRealtime: true });
+    }
     requireStaff('publish', 'Enter the staff password to publish absence notices.');
   });
 

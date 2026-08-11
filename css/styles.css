@@ -618,14 +618,17 @@ body.has-batch .landing-hero {
 }
 
 .alert-card-actions {
-  display: none;
+  display: none !important;
   flex-wrap: wrap;
-  gap: 0.45rem;
-  margin-top: 0.15rem;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(91, 138, 116, 0.22);
 }
 
-body.staff-unlocked .alert-card-actions {
-  display: flex;
+body.staff-unlocked .alert-card-actions,
+.alert-card-actions.is-visible {
+  display: flex !important;
 }
 
 .alert-action-btn {
@@ -633,10 +636,10 @@ body.staff-unlocked .alert-card-actions {
   background: #f3f7f4;
   color: var(--ascend-soft);
   border-radius: 0.65rem;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.78rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
-  min-height: 2.25rem;
+  min-height: 2.4rem;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
