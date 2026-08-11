@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0D1512" />
+  <meta name="theme-color" content="#E8EEE9" />
   <meta name="description" content="Ascend Campus Hub — teacher absence alerts and timetable assistant." />
   <title>Campus Hub — Ascend International</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,24 +13,25 @@
         extend: {
           colors: {
             ascend: {
-              bg: '#0D1512',
-              deep: '#0F1715',
-              mid: '#14201B',
-              accent: '#10B981',
-              accentHot: '#34D399',
-              soft: '#F8FAFC',
-              mist: '#E2E8F0',
-              muted: '#94A3B8',
-              mint: '#A7F3D0'
+              bg: '#E8EEE9',
+              deep: '#DCE6DF',
+              mid: '#CFDCD3',
+              accent: '#5B8A74',
+              accentHot: '#4A7562',
+              soft: '#24332C',
+              mist: '#3A4A42',
+              muted: '#6B7C73',
+              mint: '#5B8A74',
+              cta: '#C9846E'
             }
           },
           fontFamily: {
-            display: ['"Playfair Display"', 'Georgia', 'serif'],
-            sans: ['Inter', 'system-ui', 'sans-serif']
+            display: ['Fraunces', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif']
           },
           boxShadow: {
-            soft: '0 12px 40px rgba(0, 0, 0, 0.45)',
-            glow: '0 0 15px rgba(16, 185, 129, 0.15)'
+            soft: '0 10px 28px rgba(36, 51, 44, 0.08)',
+            glow: '0 0 0 2px rgba(91, 138, 116, 0.15)'
           }
         }
       }
@@ -38,13 +39,13 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;650;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="stylesheet" href="css/fx.css" />
   <link rel="stylesheet" href="css/cloud.css" />
 </head>
 <body class="font-sans text-ascend-mist antialiased min-h-screen overflow-x-hidden ascend-body">
-  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-ascend-deep focus:text-white focus:px-4 focus:py-2 focus:rounded-lg">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-white focus:text-ascend-soft focus:px-4 focus:py-2 focus:rounded-lg">
     Skip to main content
   </a>
 
@@ -61,7 +62,7 @@
           <h1 id="landing-title" class="landing-title">Campus Hub</h1>
           <p id="batch-heading" class="landing-kicker">Pick your batch to jump in</p>
           <p class="landing-sub">
-            Alerts when teachers are out, your week’s timetable in one tap — built for Ascend students.
+            Live teacher absences and your weekly timetable — calm, clear, and built for Ascend.
           </p>
         </div>
 
@@ -81,22 +82,22 @@
 
     <!-- Dashboard — reveals under header after batch select -->
     <div id="app-shell" class="dashboard flex-1 flex flex-col" hidden>
-      <div class="app-toolbar sticky top-0 z-40 border-y border-emerald-900/30 bg-[#0D1512]/92 backdrop-blur-md">
+      <div class="app-toolbar sticky top-0 z-40 border-y border-ascend-accent/20 bg-ascend-bg/90 backdrop-blur-md">
         <div class="mx-auto max-w-6xl px-3 sm:px-6 safe-x">
           <div class="flex min-h-12 sm:min-h-14 items-center justify-between gap-2 py-2">
             <div class="flex items-center gap-2 sm:gap-3 min-w-0">
-              <span id="batch-badge" class="inline-flex max-w-[45vw] sm:max-w-none truncate items-center rounded-full bg-emerald-950/40 border border-emerald-500/40 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-ascend-accent"></span>
+              <span id="batch-badge" class="inline-flex max-w-[45vw] sm:max-w-none truncate items-center rounded-full bg-ascend-accent/10 border border-ascend-accent/30 px-2.5 py-1 text-[11px] sm:text-xs font-semibold text-ascend-accentHot"></span>
               <span id="cloud-status" class="cloud-status hidden text-[10px] sm:text-xs font-semibold tracking-wide" hidden></span>
             </div>
             <div class="header-actions flex items-center gap-1.5 sm:gap-2 shrink-0">
-              <button id="change-batch-btn" type="button" class="header-text-btn text-xs sm:text-sm font-medium text-ascend-muted hover:text-white focus:outline-none focus:ring-2 focus:ring-ascend-accent rounded-md px-2 py-2 min-h-10">
+              <button id="change-batch-btn" type="button" class="header-text-btn text-xs sm:text-sm font-medium text-ascend-muted hover:text-ascend-soft focus:outline-none focus:ring-2 focus:ring-ascend-accent rounded-md px-2 py-2 min-h-10">
                 <span class="sm:hidden">Batch</span>
                 <span class="hidden sm:inline">Change batch</span>
               </button>
-              <button id="admin-toggle-btn" type="button" class="surface-btn rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white min-h-10" aria-haspopup="dialog">
+              <button id="admin-toggle-btn" type="button" class="surface-btn rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium min-h-10" aria-haspopup="dialog">
                 Staff
               </button>
-              <button id="staff-lock-btn" type="button" class="hidden surface-btn rounded-lg px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium text-white min-h-10" title="End staff session">
+              <button id="staff-lock-btn" type="button" class="hidden surface-btn rounded-xl px-2.5 sm:px-3 py-2 text-xs sm:text-sm font-medium min-h-10" title="End staff session">
                 Lock
               </button>
             </div>
@@ -147,7 +148,7 @@
             <button
               type="button"
               id="edit-timetable-btn"
-              class="hidden surface-btn rounded-xl px-4 py-2.5 text-sm font-semibold text-white min-h-11 shrink-0"
+              class="hidden surface-btn rounded-xl px-4 py-2.5 text-sm font-semibold min-h-11 shrink-0"
               hidden
             >
               Edit Timetable
@@ -156,7 +157,7 @@
 
           <form id="timetable-form" class="surface-card p-4 sm:p-6 space-y-5 sm:space-y-6">
             <fieldset>
-              <legend class="text-sm font-semibold text-white mb-3">What do you want?</legend>
+              <legend class="text-sm font-semibold text-ascend-soft mb-3">What do you want?</legend>
               <div class="choice-grid choice-grid--two">
                 <label class="choice-chip">
                   <input type="radio" name="tt-mode" value="day" checked />
@@ -170,7 +171,7 @@
             </fieldset>
 
             <fieldset id="tt-day-fieldset">
-              <legend class="text-sm font-semibold text-white mb-3">Day</legend>
+              <legend class="text-sm font-semibold text-ascend-soft mb-3">Day</legend>
               <div id="tt-day-options" class="day-chip-row" role="radiogroup" aria-label="Select day"></div>
             </fieldset>
 
@@ -185,7 +186,7 @@
           </form>
 
           <div id="tt-results" class="mt-5 sm:mt-6 hidden" hidden aria-live="polite">
-            <h3 id="tt-results-title" class="text-base sm:text-lg font-semibold text-white mb-3"></h3>
+            <h3 id="tt-results-title" class="text-base sm:text-lg font-semibold text-ascend-soft mb-3"></h3>
             <ul id="tt-results-list" class="tt-results-list space-y-2"></ul>
             <p id="tt-results-empty" class="hidden surface-card border-dashed px-4 sm:px-6 py-8 text-center text-ascend-muted"></p>
           </div>
@@ -205,13 +206,13 @@
           <h2 id="auth-modal-title" class="font-display text-xl font-semibold text-ascend-soft">Staff password</h2>
           <p id="auth-modal-desc" class="text-sm text-ascend-muted mt-1">Enter the staff password to continue.</p>
         </div>
-        <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-auth aria-label="Close dialog">
+        <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-ascend-accent/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-auth aria-label="Close dialog">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
         </button>
       </div>
       <form id="auth-form" class="space-y-4">
         <div>
-          <label for="staff-password" class="block text-sm font-semibold text-white mb-1.5">Password</label>
+          <label for="staff-password" class="block text-sm font-semibold text-ascend-soft mb-1.5">Password</label>
           <div class="password-field">
             <input id="staff-password" type="password" required autocomplete="current-password" class="touch-field surface-field w-full rounded-xl px-4 py-3 pr-12" />
             <button type="button" id="toggle-password" class="password-toggle" aria-label="Show password" aria-pressed="false">
@@ -243,31 +244,31 @@
           <h2 id="admin-modal-title" class="font-display text-xl font-semibold text-ascend-soft">Publish absence notice</h2>
           <p class="text-sm text-ascend-muted mt-1">Staff only — posts appear for the selected batch.</p>
         </div>
-        <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-modal aria-label="Close dialog">
+        <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-ascend-accent/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-modal aria-label="Close dialog">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 0 0-1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
         </button>
       </div>
       <form id="absence-form" class="space-y-4">
         <div>
-          <label for="abs-teacher" class="block text-sm font-semibold text-white mb-1.5">Teacher name</label>
+          <label for="abs-teacher" class="block text-sm font-semibold text-ascend-soft mb-1.5">Teacher name</label>
           <input id="abs-teacher" required class="touch-field surface-field w-full rounded-xl px-4 py-3" />
         </div>
         <div>
-          <label for="abs-subject" class="block text-sm font-semibold text-white mb-1.5">Subject</label>
+          <label for="abs-subject" class="block text-sm font-semibold text-ascend-soft mb-1.5">Subject</label>
           <input id="abs-subject" required class="touch-field surface-field w-full rounded-xl px-4 py-3" />
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label for="abs-batch" class="block text-sm font-semibold text-white mb-1.5">Affected batch</label>
+            <label for="abs-batch" class="block text-sm font-semibold text-ascend-soft mb-1.5">Affected batch</label>
             <select id="abs-batch" required class="touch-field surface-field w-full rounded-xl px-4 py-3"></select>
           </div>
           <div>
-            <label for="abs-date" class="block text-sm font-semibold text-white mb-1.5">Date</label>
+            <label for="abs-date" class="block text-sm font-semibold text-ascend-soft mb-1.5">Date</label>
             <input id="abs-date" type="date" required class="touch-field surface-field w-full rounded-xl px-4 py-3" />
           </div>
         </div>
         <div>
-          <label for="abs-cover" class="block text-sm font-semibold text-white mb-1.5">Cover / reason <span class="font-normal text-ascend-muted">(optional)</span></label>
+          <label for="abs-cover" class="block text-sm font-semibold text-ascend-soft mb-1.5">Cover / reason <span class="font-normal text-ascend-muted">(optional)</span></label>
           <select id="abs-cover" class="touch-field surface-field w-full rounded-xl px-4 py-3">
             <option value="">Select a reason</option>
             <option value="Feeling Unwell">Feeling Unwell</option>
@@ -276,13 +277,13 @@
             <option value="__other__">Other</option>
           </select>
           <div id="abs-cover-other-wrap" class="mt-3 hidden">
-            <label for="abs-cover-other" class="block text-sm font-semibold text-white mb-1.5">Please specify</label>
+            <label for="abs-cover-other" class="block text-sm font-semibold text-ascend-soft mb-1.5">Please specify</label>
             <input id="abs-cover-other" type="text" maxlength="200" placeholder="Enter reason" class="touch-field surface-field w-full rounded-xl px-4 py-3" />
           </div>
         </div>
         <div class="flex items-center gap-2 min-h-11">
           <input id="abs-urgent" type="checkbox" class="h-5 w-5 rounded border-white/20 text-ascend-accent focus:ring-ascend-accent bg-white/10" />
-          <label for="abs-urgent" class="text-sm font-medium text-white">Mark as urgent (show top banner)</label>
+          <label for="abs-urgent" class="text-sm font-medium text-ascend-soft">Mark as urgent (show top banner)</label>
         </div>
         <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
           <button type="button" data-close-modal class="surface-btn w-full sm:w-auto rounded-xl px-4 py-3 font-medium min-h-12">Cancel</button>
@@ -301,14 +302,14 @@
           <h2 id="tt-edit-modal-title" class="font-display text-xl font-semibold text-ascend-soft">Edit Timetable</h2>
           <p class="text-sm text-ascend-muted mt-1">Update periods for <span id="tt-edit-batch-label" class="text-ascend-accent font-semibold"></span>. Changes sync for everyone.</p>
         </div>
-        <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-tt-edit aria-label="Close dialog">
+        <button type="button" class="rounded-lg p-2.5 text-ascend-muted hover:bg-ascend-accent/10 focus:outline-none focus:ring-2 focus:ring-ascend-accent min-h-11 min-w-11" data-close-tt-edit aria-label="Close dialog">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/></svg>
         </button>
       </div>
 
       <form id="tt-edit-form" class="space-y-4">
         <div>
-          <label for="tt-edit-day" class="block text-sm font-semibold text-white mb-1.5">Day</label>
+          <label for="tt-edit-day" class="block text-sm font-semibold text-ascend-soft mb-1.5">Day</label>
           <select id="tt-edit-day" class="touch-field surface-field w-full rounded-xl px-4 py-3">
             <option value="Monday">Monday</option>
             <option value="Tuesday">Tuesday</option>
@@ -320,7 +321,7 @@
 
         <div>
           <div class="flex items-center justify-between gap-2 mb-2">
-            <p class="text-sm font-semibold text-white">Periods</p>
+            <p class="text-sm font-semibold text-ascend-soft">Periods</p>
             <button type="button" id="tt-edit-add-slot" class="surface-btn rounded-lg px-3 py-2 text-xs font-semibold min-h-10">+ Add period</button>
           </div>
           <div id="tt-edit-slots" class="tt-edit-slots space-y-3"></div>

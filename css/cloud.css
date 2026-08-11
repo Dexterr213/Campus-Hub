@@ -2,21 +2,21 @@
   white-space: nowrap;
   border-radius: 999px;
   padding: 0.2rem 0.55rem;
-  border: 1px solid rgba(6, 78, 59, 0.35);
+  border: 1px solid rgba(91, 138, 116, 0.28);
 }
 
 .cloud-status--live {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
+  background: rgba(91, 138, 116, 0.12);
+  color: #4a7562;
 }
 
 .cloud-status--warn {
-  background: rgba(255, 255, 255, 0.05);
-  color: #94a3b8;
+  background: rgba(36, 51, 44, 0.05);
+  color: #6b7c73;
 }
 
 .notify-btn.notify-btn--on {
-  background: #10b981 !important;
-  color: #06241a !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3), 0 0 15px rgba(16, 185, 129, 0.15);
+  background: #5b8a74 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 2px rgba(91, 138, 116, 0.22), 0 8px 20px rgba(91, 138, 116, 0.2);
 }

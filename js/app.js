@@ -538,7 +538,7 @@ function renderAbsences(opts = {}) {
         <span class="text-lg" aria-hidden="true">⚠️</span>
         <div>
           <p class="font-semibold text-ascend-accent text-sm uppercase tracking-wide">Urgent cancellation</p>
-          <p class="text-white font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
+          <p class="text-ascend-soft font-medium mt-0.5">${escapeHtml(formatAbsenceLine(a))}</p>
           ${a.cover ? `<p class="text-sm text-ascend-muted mt-1">${escapeHtml(a.cover)}</p>` : ''}
         </div>
       </div>`
@@ -561,12 +561,12 @@ function renderAbsences(opts = {}) {
           card.innerHTML = `
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 class="font-semibold text-white">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
+          <h3 class="font-semibold text-ascend-soft">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
           <p class="text-sm text-ascend-muted mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
         </div>
-        ${a.urgent ? '<span class="rounded-full bg-white/10 border border-ascend-accent/40 px-2.5 py-0.5 text-xs font-bold text-ascend-accent">URGENT</span>' : ''}
+        ${a.urgent ? '<span class="rounded-full bg-ascend-cta/15 border border-ascend-cta/40 px-2.5 py-0.5 text-xs font-bold text-ascend-accent">URGENT</span>' : ''}
       </div>
-      ${a.cover ? `<p class="mt-2 text-sm text-ascend-muted border-t border-white/10 pt-2">${escapeHtml(a.cover)}</p>` : ''}
+      ${a.cover ? `<p class="mt-2 text-sm text-ascend-muted border-t border-ascend-accent/15 pt-2">${escapeHtml(a.cover)}</p>` : ''}
     `;
           els.absenceList.appendChild(card);
         });
@@ -1137,7 +1137,7 @@ function spawnBurst() {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const layer = document.getElementById('fx-burst');
   if (!layer) return;
-  const colors = ['#10B981', '#34D399', '#6EE7B7', '#A7F3D0', '#E2E8F0'];
+  const colors = ['#5B8A74', '#4A7562', '#C9846E', '#8FA896', '#D5E0D8'];
   const cx = window.innerWidth / 2;
   const cy = window.innerHeight * 0.42;
   for (let i = 0; i < 28; i++) {
