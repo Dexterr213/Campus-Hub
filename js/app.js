@@ -11,6 +11,8 @@ import {
   getAbsencesForBatch,
   getUrgentForBatch,
   publishAbsence,
+  updateAbsence,
+  deleteAbsence,
   formatAbsenceLine,
   formatDisplayDate,
   toISODate,
@@ -101,6 +103,14 @@ let unsubAbsences = null;
 let staffPasswordSession = '';
 /** @type {{ day: string, slots: object[] } | null} */
 let ttEditDraft = null;
+/** @type {string | null} */
+let editingAbsenceId = null;
+
+const COVER_PRESETS = [
+  'Feeling Unwell',
+  'Medical Appointment',
+  'Personal / Family Emergency'
+];
 
 init();
 
@@ -265,6 +275,7 @@ function updateStaffUi() {
     els.editTimetableBtn.classList.toggle('hidden', !unlocked);
     els.editTimetableBtn.hidden = !unlocked;
   }
+  document.body.classList.toggle('staff-unlocked', unlocked);
 }
 
 function setPasswordVisible(visible) {
@@ -373,8 +384,9 @@ function closeAuthModal() {
 /* —— Batch landing —— */
 
 function setupBatchLanding() {
-  els.batchGrid.innerHTML = '';
+  if (!els.batchGrid) return;
 
+  els.batchGrid.innerHTML = '';
   BATCHES.forEach((batch) => {
     const card = document.createElement('button');
     card.type = 'button';
@@ -391,22 +403,30 @@ function setupBatchLanding() {
         <span class="batch-arrow" aria-hidden="true">→</span>
       </div>
     `;
-    card.addEventListener('click', () => {
-      els.batchGrid.querySelectorAll('.batch-card').forEach((c) => {
-        const on = c === card;
-        c.classList.toggle('selected', on);
-        c.setAttribute('aria-selected', on ? 'true' : 'false');
-      });
-      setSelectedBatch(batch);
-      enterApp(batch, { burst: true });
-    });
     els.batchGrid.appendChild(card);
   });
 
-  els.changeBatch.addEventListener('click', () => {
-    clearSelectedBatch();
-    showLanding();
-  });
+  els.batchGrid.onclick = (e) => {
+    const card = e.target.closest('.batch-card');
+    if (!card || !els.batchGrid.contains(card)) return;
+    const batch = card.dataset.batch;
+    if (!batch) return;
+
+    els.batchGrid.querySelectorAll('.batch-card').forEach((c) => {
+      const on = c === card;
+      c.classList.toggle('selected', on);
+      c.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    setSelectedBatch(batch);
+    enterApp(batch, { burst: true });
+  };
+
+  if (els.changeBatch) {
+    els.changeBatch.onclick = () => {
+      clearSelectedBatch();
+      showLanding();
+    };
+  }
 }
 
 function showLanding() {
@@ -415,7 +435,7 @@ function showLanding() {
   els.shell.hidden = true;
   els.shell.classList.add('hidden');
   if (els.batchHeading) els.batchHeading.textContent = 'Pick your batch to jump in';
-  els.batchGrid.querySelectorAll('.batch-card').forEach((c) => {
+  els.batchGrid?.querySelectorAll('.batch-card').forEach((c) => {
     c.classList.remove('selected');
     c.setAttribute('aria-selected', 'false');
   });
@@ -557,16 +577,31 @@ function renderAbsences(opts = {}) {
         els.absenceEmpty.classList.add('hidden');
         items.forEach((a) => {
           const card = document.createElement('article');
-          card.className = `alert-card${a.urgent ? ' urgent' : ''}`;
+          card.className = `alert-card${a.urgent ? ' is-urgent' : ''}`;
+          card.dataset.absenceId = a.id;
+          const cover = String(a.cover || '').trim();
           card.innerHTML = `
-      <div class="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h3 class="font-semibold text-ascend-soft">${escapeHtml(a.teacher)} · ${escapeHtml(a.subject)}</h3>
-          <p class="text-sm text-ascend-muted mt-0.5">${escapeHtml(a.batch)} · Absent on ${escapeHtml(formatDisplayDate(a.date))}</p>
+      <div class="alert-card-top">
+        <div class="alert-card-heading">
+          <h3 class="alert-card-title">${escapeHtml(a.teacher)}</h3>
+          <p class="alert-card-subject">${escapeHtml(a.subject)}</p>
         </div>
-        ${a.urgent ? '<span class="rounded-full bg-ascend-cta/15 border border-ascend-cta/40 px-2.5 py-0.5 text-xs font-bold text-ascend-accent">URGENT</span>' : ''}
+        <span class="alert-status ${a.urgent ? 'alert-status--urgent' : 'alert-status--notice'}">${
+          a.urgent ? 'Urgent' : 'Notice'
+        }</span>
       </div>
-      ${a.cover ? `<p class="mt-2 text-sm text-ascend-muted border-t border-ascend-accent/15 pt-2">${escapeHtml(a.cover)}</p>` : ''}
+      <div class="alert-card-meta">
+        <span class="alert-meta-chip">${escapeHtml(a.batch)}</span>
+        <span class="alert-meta-chip alert-meta-chip--date">Absent ${escapeHtml(formatDisplayDate(a.date))}</span>
+      </div>
+      <div class="alert-card-body">
+        <p class="alert-body-label">Cover / reason</p>
+        <p class="alert-body-text">${cover ? escapeHtml(cover) : 'No extra notes for this absence.'}</p>
+      </div>
+      <div class="alert-card-actions">
+        <button type="button" class="alert-action-btn" data-absence-edit="${escapeHtml(a.id)}">Edit</button>
+        <button type="button" class="alert-action-btn alert-action-btn--danger" data-absence-delete="${escapeHtml(a.id)}">Delete</button>
+      </div>
     `;
           els.absenceList.appendChild(card);
         });
@@ -632,6 +667,34 @@ function getCoverValue() {
   return selected;
 }
 
+function setCoverFields(cover = '') {
+  const value = String(cover || '').trim();
+  if (!els.absCover) return;
+  if (!value) {
+    els.absCover.value = '';
+    if (els.absCoverOther) els.absCoverOther.value = '';
+  } else if (COVER_PRESETS.includes(value)) {
+    els.absCover.value = value;
+    if (els.absCoverOther) els.absCoverOther.value = '';
+  } else {
+    els.absCover.value = '__other__';
+    if (els.absCoverOther) els.absCoverOther.value = value;
+  }
+  syncCoverOtherField();
+}
+
+function setAbsenceModalMode(mode) {
+  const title = document.getElementById('admin-modal-title');
+  const submitBtn = els.absenceForm?.querySelector('button[type="submit"]');
+  if (mode === 'edit') {
+    if (title) title.textContent = 'Edit absence notice';
+    if (submitBtn) submitBtn.textContent = 'Save changes';
+  } else {
+    if (title) title.textContent = 'Publish absence notice';
+    if (submitBtn) submitBtn.textContent = 'Publish';
+  }
+}
+
 function setupAdminModal() {
   BATCHES.forEach((b) => {
     const opt = document.createElement('option');
@@ -650,6 +713,29 @@ function setupAdminModal() {
     el.addEventListener('click', closeAdminModal);
   });
 
+  els.absenceList?.addEventListener('click', async (e) => {
+    const editBtn = e.target.closest('[data-absence-edit]');
+    const deleteBtn = e.target.closest('[data-absence-delete]');
+    if (!editBtn && !deleteBtn) return;
+
+    if (!isStaffUnlocked() || !staffPasswordSession) {
+      showToast('Staff password required');
+      requireStaff('publish', 'Enter the staff password to manage absence notices.');
+      return;
+    }
+
+    if (editBtn) {
+      const id = editBtn.getAttribute('data-absence-edit');
+      await openEditAbsenceModal(id);
+      return;
+    }
+
+    if (deleteBtn) {
+      const id = deleteBtn.getAttribute('data-absence-delete');
+      await handleDeleteAbsence(id);
+    }
+  });
+
   els.absenceForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!isStaffUnlocked() || !staffPasswordSession) {
@@ -665,45 +751,109 @@ function setupAdminModal() {
       return;
     }
 
-    try {
-      const teacher = document.getElementById('abs-teacher').value;
-      const subject = document.getElementById('abs-subject').value;
-      const batch = document.getElementById('abs-batch').value;
-      const date = document.getElementById('abs-date').value;
-      const urgent = document.getElementById('abs-urgent').checked;
+    const teacher = document.getElementById('abs-teacher').value;
+    const subject = document.getElementById('abs-subject').value;
+    const batch = document.getElementById('abs-batch').value;
+    const date = document.getElementById('abs-date').value;
+    const urgent = document.getElementById('abs-urgent').checked;
+    const isEdit = Boolean(editingAbsenceId);
 
-      await publishAbsence({
-        password: staffPasswordSession,
-        teacher,
-        subject,
-        batch,
-        date,
-        cover,
-        urgent
-      });
-      await triggerDiscordAlert({ teacher, subject, batch, date, notes: cover, urgent });
-      closeAdminModal();
-      els.absenceForm.reset();
-      syncCoverOtherField();
-      showToast('Published for everyone');
+    try {
+      if (isEdit) {
+        await updateAbsence({
+          password: staffPasswordSession,
+          id: editingAbsenceId,
+          teacher,
+          subject,
+          batch,
+          date,
+          cover,
+          urgent
+        });
+        closeAdminModal();
+        showToast('Absence updated');
+      } else {
+        await publishAbsence({
+          password: staffPasswordSession,
+          teacher,
+          subject,
+          batch,
+          date,
+          cover,
+          urgent
+        });
+        await triggerDiscordAlert({ teacher, subject, batch, date, notes: cover, urgent });
+        closeAdminModal();
+        showToast('Published for everyone');
+      }
       if (currentBatch) renderAbsences();
     } catch (err) {
       console.error(err);
       if (err?.code === 'UNAUTHORIZED') {
         setStaffUnlocked(false);
         showToast('Invalid staff password');
-        requireStaff('publish', 'Enter the staff password to publish absence notices.');
+        requireStaff('publish', 'Enter the staff password to manage absence notices.');
         return;
       }
-      showToast(err?.message || 'Publish failed — check Vercel env / Supabase');
+      showToast(err?.message || (isEdit ? 'Update failed' : 'Publish failed — check Vercel env / Supabase'));
     }
   });
 }
 
+async function openEditAbsenceModal(id) {
+  try {
+    const items = await getAbsencesForBatch(currentBatch);
+    const absence = items.find((a) => a.id === id);
+    if (!absence) {
+      showToast('Absence not found');
+      return;
+    }
+
+    editingAbsenceId = absence.id;
+    setAbsenceModalMode('edit');
+    document.getElementById('abs-teacher').value = absence.teacher || '';
+    document.getElementById('abs-subject').value = absence.subject || '';
+    els.absBatch.value = absence.batch || currentBatch;
+    els.absDate.value = absence.date || toISODate(new Date());
+    document.getElementById('abs-urgent').checked = Boolean(absence.urgent);
+    setCoverFields(absence.cover);
+
+    els.adminModal.hidden = false;
+    els.adminModal.classList.remove('hidden');
+    document.getElementById('abs-teacher').focus();
+  } catch (err) {
+    console.error(err);
+    showToast('Could not open absence for editing');
+  }
+}
+
+async function handleDeleteAbsence(id) {
+  const ok = window.confirm('Delete this absence notice? Students will no longer see it.');
+  if (!ok) return;
+
+  try {
+    await deleteAbsence({ password: staffPasswordSession, id });
+    showToast('Absence deleted');
+    if (currentBatch) renderAbsences();
+  } catch (err) {
+    console.error(err);
+    if (err?.code === 'UNAUTHORIZED') {
+      setStaffUnlocked(false);
+      showToast('Invalid staff password');
+      requireStaff('publish', 'Enter the staff password to manage absence notices.');
+      return;
+    }
+    showToast(err?.message || 'Delete failed');
+  }
+}
+
 function openAdminModal() {
+  editingAbsenceId = null;
+  setAbsenceModalMode('publish');
+  els.absenceForm?.reset();
   els.absDate.value = toISODate(new Date());
   if (currentBatch) els.absBatch.value = currentBatch;
-  syncCoverOtherField();
+  setCoverFields('');
   els.adminModal.hidden = false;
   els.adminModal.classList.remove('hidden');
   document.getElementById('abs-teacher').focus();
@@ -712,8 +862,10 @@ function openAdminModal() {
 function closeAdminModal() {
   els.adminModal.hidden = true;
   els.adminModal.classList.add('hidden');
+  editingAbsenceId = null;
+  setAbsenceModalMode('publish');
   els.absenceForm?.reset();
-  syncCoverOtherField();
+  setCoverFields('');
 }
 
 /* —— Timetable assistant (structured picks, no typing) —— */

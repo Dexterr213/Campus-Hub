@@ -56,6 +56,22 @@ export async function publishAbsence({
   cover,
   urgent
 }) {
+  if (!cloudEnabled) {
+    const list = loadAbsences();
+    const absence = {
+      id: uid('abs'),
+      teacher: String(teacher || '').trim(),
+      subject: String(subject || '').trim(),
+      batch,
+      date,
+      cover: String(cover || '').trim(),
+      urgent: Boolean(urgent),
+      createdAt: new Date().toISOString()
+    };
+    saveAbsences([absence, ...list]);
+    return absence;
+  }
+
   const res = await fetch('/api/publish-absence', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -90,6 +106,102 @@ export async function publishAbsence({
   }
 
   return data?.absence || null;
+}
+
+async function staffAbsenceRequest(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+
+  let data = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (res.status === 401) {
+    const err = new Error(data?.error || 'Unauthorized');
+    err.code = 'UNAUTHORIZED';
+    throw err;
+  }
+
+  if (!res.ok) {
+    const err = new Error(data?.error || 'Request failed');
+    err.code = 'ABSENCE_ACTION_FAILED';
+    throw err;
+  }
+
+  return data;
+}
+
+export async function updateAbsence({
+  password,
+  id,
+  teacher,
+  subject,
+  batch,
+  date,
+  cover,
+  urgent
+}) {
+  if (!id) {
+    const err = new Error('Missing absence id');
+    err.code = 'ABSENCE_ACTION_FAILED';
+    throw err;
+  }
+
+  if (!cloudEnabled) {
+    const list = loadAbsences();
+    const idx = list.findIndex((a) => a.id === id);
+    if (idx < 0) {
+      const err = new Error('Absence not found');
+      err.code = 'ABSENCE_ACTION_FAILED';
+      throw err;
+    }
+    const next = {
+      ...list[idx],
+      teacher: String(teacher || '').trim(),
+      subject: String(subject || '').trim(),
+      batch,
+      date,
+      cover: String(cover || '').trim(),
+      urgent: Boolean(urgent)
+    };
+    list[idx] = next;
+    saveAbsences(list);
+    return next;
+  }
+
+  const data = await staffAbsenceRequest('/api/update-absence', {
+    password,
+    id,
+    teacher: String(teacher || '').trim(),
+    subject: String(subject || '').trim(),
+    batch,
+    date,
+    cover: String(cover || '').trim(),
+    urgent: Boolean(urgent)
+  });
+  return data?.absence || null;
+}
+
+export async function deleteAbsence({ password, id }) {
+  if (!id) {
+    const err = new Error('Missing absence id');
+    err.code = 'ABSENCE_ACTION_FAILED';
+    throw err;
+  }
+
+  if (!cloudEnabled) {
+    const list = loadAbsences().filter((a) => a.id !== id);
+    saveAbsences(list);
+    return { ok: true, id };
+  }
+
+  return staffAbsenceRequest('/api/delete-absence', { password, id });
 }
 
 export function formatAbsenceLine(a) {

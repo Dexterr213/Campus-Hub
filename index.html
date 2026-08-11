@@ -40,9 +40,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;650;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css" />
-  <link rel="stylesheet" href="css/fx.css" />
-  <link rel="stylesheet" href="css/cloud.css" />
+  <link rel="stylesheet" href="css/styles.css?v=batchfix3" />
+  <link rel="stylesheet" href="css/fx.css?v=batchfix3" />
+  <link rel="stylesheet" href="css/cloud.css?v=batchfix3" />
 </head>
 <body class="font-sans text-ascend-mist antialiased min-h-screen overflow-x-hidden ascend-body">
   <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-50 focus:bg-white focus:text-ascend-soft focus:px-4 focus:py-2 focus:rounded-lg">
@@ -62,7 +62,7 @@
           <h1 id="landing-title" class="landing-title">Campus Hub</h1>
           <p id="batch-heading" class="landing-kicker">Pick your batch to jump in</p>
           <p class="landing-sub">
-            Live teacher absences and your weekly timetable — calm, clear, and built for Ascend.
+            Live teacher absences and your weekly timetable.
           </p>
         </div>
 
@@ -133,7 +133,7 @@
             </button>
           </div>
           <p id="notify-hint" class="mb-4 text-xs sm:text-sm text-ascend-muted">Turn on alerts to get a pop-up when an urgent cancellation is posted for your batch.</p>
-          <div id="absence-list" class="grid gap-3 md:grid-cols-2" aria-live="polite"></div>
+          <div id="absence-list" class="grid gap-4 md:grid-cols-2" aria-live="polite"></div>
           <p id="absence-empty" class="hidden surface-card border-dashed px-6 py-12 text-center text-ascend-muted">
             No absence alerts for your batch right now.
           </p>
@@ -143,7 +143,7 @@
           <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
             <div>
               <h2 class="font-display text-xl sm:text-2xl font-semibold text-ascend-soft">Timetable Assistant</h2>
-              <p class="mt-1 text-sm sm:text-base text-ascend-muted">Pick a full day or the whole week — no typing needed.</p>
+              <p class="mt-1 text-sm sm:text-base text-ascend-muted">Pick a full day or the whole week.</p>
             </div>
             <button
               type="button"
@@ -338,6 +338,6 @@
 
   <div id="toast" class="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-[60] hidden max-w-[calc(100%-2rem)] rounded-xl bg-ascend-accent px-4 py-2.5 text-sm font-semibold text-ascend-bg shadow-glow" role="status" aria-live="polite"></div>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=batchfix3"></script>
 </body>
 </html>

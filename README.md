@@ -24,6 +24,8 @@ Redeploy after saving env vars.
 |-------|---------|
 | `POST /api/verify-staff` | Check staff password (unlock UI) |
 | `POST /api/publish-absence` | Password check + insert absence in Supabase |
+| `POST /api/update-absence` | Password check + update an absence |
+| `POST /api/delete-absence` | Password check + delete an absence |
 | `POST /api/save-timetable-day` | Password check + save one weekday of timetable slots |
 | `POST /api/discord-alert` | Send Discord embed (webhook only on server) |
 
