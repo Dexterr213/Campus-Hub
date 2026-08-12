@@ -30,7 +30,9 @@ Students were checking cancellations and schedules in scattered places. Staff ne
 ## Run locally
 
 ```bash
-npx serve .
+npx serve
+```
 
 Author
-Kyaw Zin Win · GitHub · kyawzinwin.software@gmail.com
+Kyaw Zin Win · GitHub: Dexterr213
+Contact: kyawzinwin.software@gmail.com
