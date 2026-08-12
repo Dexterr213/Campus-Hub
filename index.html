@@ -60,7 +60,7 @@
       <div class="mx-auto w-full max-w-3xl text-center landing-hero is-entered">
         <div class="landing-intro">
           <h1 id="landing-title" class="landing-title">Campus Hub</h1>
-          <p id="batch-heading" class="landing-kicker">Pick your batch to jump in</p>
+          <p id="batch-heading" class="landing-kicker">A Level Batch 2</p>
           <p class="landing-sub">
             Live teacher absences and your weekly timetable.
           </p>
@@ -70,11 +70,17 @@
           <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">📢</span> Live absences</span>
           <span class="feature-pill"><span class="feature-pill-icon" aria-hidden="true">📅</span> Timetable picks</span>
         </div>
+
+        <div class="get-started-wrap landing-cta">
+          <button id="get-started-btn" type="button" class="btn-primary get-started-btn rounded-xl px-8 py-3.5 text-base font-semibold min-h-12">
+            Get started
+          </button>
+        </div>
       </div>
     </header>
 
-    <!-- Batch picker — collapses after selection -->
-    <section id="batch-picker" class="batch-picker safe-x px-4 sm:px-6 pb-6" aria-label="Batch selection">
+    <!-- Batch picker (hidden when only one batch; Get started handles entry) -->
+    <section id="batch-picker" class="batch-picker safe-x px-4 sm:px-6 pb-6" aria-label="Batch selection" hidden>
       <div class="mx-auto w-full max-w-3xl">
         <div id="batch-grid" class="batch-grid" role="listbox" aria-label="Available batches"></div>
       </div>

@@ -89,6 +89,7 @@ const els = {
   absCover: document.getElementById('abs-cover'),
   absCoverOtherWrap: document.getElementById('abs-cover-other-wrap'),
   absCoverOther: document.getElementById('abs-cover-other'),
+  getStartedBtn: document.getElementById('get-started-btn'),
   toast: document.getElementById('toast')
 };
 
@@ -275,6 +276,9 @@ function updateStaffUi() {
     els.editTimetableBtn.classList.toggle('hidden', !unlocked);
     els.editTimetableBtn.hidden = !unlocked;
   }
+  if (els.changeBatch && BATCHES.length <= 1) {
+    els.changeBatch.classList.add('hidden');
+  }
   document.body.classList.toggle('staff-unlocked', unlocked);
   // Refresh cards so Edit/Delete appear immediately after unlock
   if (currentBatch) renderAbsences({ fromRealtime: true });
@@ -392,6 +396,15 @@ function closeAuthModal() {
 function setupBatchLanding() {
   if (!els.batchGrid) return;
 
+  // Single-batch mode: landing uses Get started; keep picker collapsed/hidden
+  if (BATCHES.length <= 1) {
+    els.landing.hidden = true;
+    els.landing.classList.add('is-collapsed');
+  } else {
+    els.landing.hidden = false;
+    els.landing.classList.remove('is-collapsed');
+  }
+
   els.batchGrid.innerHTML = '';
   BATCHES.forEach((batch) => {
     const card = document.createElement('button');
@@ -427,6 +440,13 @@ function setupBatchLanding() {
     enterApp(batch, { burst: true });
   };
 
+  els.getStartedBtn?.addEventListener('click', () => {
+    const batch = BATCHES[0];
+    if (!batch) return;
+    setSelectedBatch(batch);
+    enterApp(batch, { burst: true });
+  });
+
   if (els.changeBatch) {
     els.changeBatch.onclick = () => {
       clearSelectedBatch();
@@ -437,10 +457,18 @@ function setupBatchLanding() {
 
 function showLanding() {
   document.body.classList.remove('has-batch');
-  els.landing?.classList.remove('is-collapsed');
+  if (BATCHES.length <= 1) {
+    els.landing.hidden = true;
+    els.landing.classList.add('is-collapsed');
+  } else {
+    els.landing.hidden = false;
+    els.landing.classList.remove('is-collapsed');
+  }
   els.shell.hidden = true;
   els.shell.classList.add('hidden');
-  if (els.batchHeading) els.batchHeading.textContent = 'Pick your batch to jump in';
+  if (els.batchHeading) {
+    els.batchHeading.textContent = BATCHES.length <= 1 ? (BATCHES[0] || 'Campus Hub') : 'Pick your batch to jump in';
+  }
   els.batchGrid?.querySelectorAll('.batch-card').forEach((c) => {
     c.classList.remove('selected');
     c.setAttribute('aria-selected', 'false');
@@ -472,6 +500,10 @@ function enterApp(batch, opts = {}) {
 
   document.body.classList.add('has-batch');
   els.landing?.classList.add('is-collapsed');
+  if (els.landing) els.landing.hidden = true;
+  if (els.changeBatch && BATCHES.length <= 1) {
+    els.changeBatch.classList.add('hidden');
+  }
   els.shell.hidden = false;
   els.shell.classList.remove('hidden');
   els.shell.classList.remove('is-entering');

@@ -193,7 +193,8 @@ body:not(.has-batch) .hero-header {
 }
 
 .landing-intro,
-.landing-pills {
+.landing-pills,
+.landing-cta {
   opacity: 0;
   transform: translateY(12px);
 }
@@ -264,7 +265,8 @@ body.has-batch .landing-kicker {
 }
 
 body.has-batch .landing-sub,
-body.has-batch .landing-pills {
+body.has-batch .landing-pills,
+body.has-batch .get-started-wrap {
   display: none;
 }
 
@@ -322,6 +324,28 @@ body.has-batch .landing-hero {
 }
 
 .feature-pill-icon { font-size: 0.85rem; line-height: 1; }
+
+.get-started-wrap {
+  margin-top: 1.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.get-started-btn {
+  min-width: 11rem;
+  border-radius: 999px !important;
+  letter-spacing: 0.01em;
+}
+
+body.has-batch .get-started-wrap,
+body.has-batch .landing-cta {
+  display: none;
+}
+
+.landing-hero.is-entered .landing-cta {
+  opacity: 0;
+  animation: enter-up 0.5s var(--ease-out) 0.28s forwards;
+}
 
 .batch-picker {
   position: relative;
