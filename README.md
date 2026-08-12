@@ -15,6 +15,7 @@ In Vercel → Project → **Settings → Environment Variables**, add:
 | `SUPABASE_URL` | `https://xxxx.supabase.co` |
 | `SUPABASE_ANON_KEY` | anon/public key (or prefer service role below) |
 | `SUPABASE_SERVICE_ROLE_KEY` | *(recommended)* service_role key for server inserts |
+| `CRON_SECRET` | Random string — Vercel Cron sends it to `/api/cleanup-absences` |
 
 Redeploy after saving env vars.
 
@@ -26,8 +27,20 @@ Redeploy after saving env vars.
 | `POST /api/publish-absence` | Password check + insert absence in Supabase |
 | `POST /api/update-absence` | Password check + update an absence |
 | `POST /api/delete-absence` | Password check + delete an absence |
+| `GET/POST /api/cleanup-absences` | Delete absences from previous months (Cron / staff) |
 | `POST /api/save-timetable-day` | Password check + save one weekday of timetable slots |
 | `POST /api/discord-alert` | Send Discord embed (webhook only on server) |
+
+## Monthly absence cleanup
+
+On the **1st of each month** (around midnight Myanmar time), Vercel Cron calls `/api/cleanup-absences` and deletes absences dated **before** that month.
+
+Example: on 1 September, all August (and earlier) absences are removed. September’s notices stay.
+
+1. Add `CRON_SECRET` in Vercel env (any long random string)  
+2. Redeploy so the cron in `vercel.json` is registered  
+3. Optional manual run (staff password):  
+   `POST /api/cleanup-absences` with `{ "password": "YOUR_STAFF_PASSWORD" }`
 
 ## Supabase setup
 

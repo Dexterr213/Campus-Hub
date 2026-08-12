@@ -349,7 +349,13 @@ body.has-batch .landing-hero {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
   }
-  .batch-grid .batch-card:last-child:nth-child(odd) {
+  .batch-grid .batch-card:only-child {
+    grid-column: 1 / -1;
+    max-width: 28rem;
+    justify-self: center;
+    width: 100%;
+  }
+  .batch-grid .batch-card:last-child:nth-child(odd):not(:only-child) {
     grid-column: 1 / -1;
     max-width: calc(50% - 0.5rem);
     justify-self: center;

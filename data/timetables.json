@@ -43,33 +43,5 @@
       { "time": "13:00 - 14:30", "subject": "Pure Maths", "room": "", "teacher": "Sr. Hpone San" },
       { "time": "14:30 - 16:00", "subject": "SAT (Math)", "room": "", "teacher": "" }
     ]
-  },
-  "A Level Batch 3": {
-    "Monday": [],
-    "Tuesday": [],
-    "Wednesday": [],
-    "Thursday": [],
-    "Friday": []
-  },
-  "A Level Batch 4": {
-    "Monday": [],
-    "Tuesday": [],
-    "Wednesday": [],
-    "Thursday": [],
-    "Friday": []
-  },
-  "O Level Batch 2": {
-    "Monday": [],
-    "Tuesday": [],
-    "Wednesday": [],
-    "Thursday": [],
-    "Friday": []
-  },
-  "Pre-IG Batch 2": {
-    "Monday": [],
-    "Tuesday": [],
-    "Wednesday": [],
-    "Thursday": [],
-    "Friday": []
   }
 }

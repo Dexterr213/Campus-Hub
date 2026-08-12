@@ -2,6 +2,12 @@
   "version": 2,
   "cleanUrls": true,
   "trailingSlash": false,
+  "crons": [
+    {
+      "path": "/api/cleanup-absences",
+      "schedule": "30 17 1 * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

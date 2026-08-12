@@ -42,7 +42,7 @@ import {
   markUrgentSeen
 } from './notify.js';
 
-const BATCHES = ['A Level Batch 2', 'A Level Batch 3', 'A Level Batch 4', 'O Level Batch 2', 'Pre-IG Batch 2'];
+const BATCHES = ['A Level Batch 2'];
 
 const els = {
   landing: document.getElementById('batch-picker'),
