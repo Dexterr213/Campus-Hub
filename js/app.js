@@ -135,12 +135,8 @@ async function init() {
   setupVisibilityTitleReset();
   updateStaffUi();
 
-  const saved = getSelectedBatch();
-  if (saved && BATCHES.includes(saved)) {
-    enterApp(saved, { silent: true });
-  } else {
-    showLanding();
-  }
+  // Always start on the landing — only Get started opens absences
+  showLanding();
 }
 
 function updateCloudBadge() {
@@ -275,9 +271,6 @@ function updateStaffUi() {
   if (els.editTimetableBtn) {
     els.editTimetableBtn.classList.toggle('hidden', !unlocked);
     els.editTimetableBtn.hidden = !unlocked;
-  }
-  if (els.changeBatch && BATCHES.length <= 1) {
-    els.changeBatch.classList.add('hidden');
   }
   document.body.classList.toggle('staff-unlocked', unlocked);
   // Refresh cards so Edit/Delete appear immediately after unlock
@@ -452,6 +445,11 @@ function setupBatchLanding() {
       clearSelectedBatch();
       showLanding();
     };
+    // Single-batch: label as Home so users can return to Get started
+    if (BATCHES.length <= 1) {
+      els.changeBatch.innerHTML = '<span>Home</span>';
+      els.changeBatch.classList.remove('hidden');
+    }
   }
 }
 
@@ -501,9 +499,6 @@ function enterApp(batch, opts = {}) {
   document.body.classList.add('has-batch');
   els.landing?.classList.add('is-collapsed');
   if (els.landing) els.landing.hidden = true;
-  if (els.changeBatch && BATCHES.length <= 1) {
-    els.changeBatch.classList.add('hidden');
-  }
   els.shell.hidden = false;
   els.shell.classList.remove('hidden');
   els.shell.classList.remove('is-entering');
