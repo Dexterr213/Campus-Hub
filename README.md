@@ -1,72 +1,36 @@
-# Ascend Dashboard (Campus Hub)
+# Campus Hub
 
-Dashboard for AIS students — timetable assistant and teacher absence announcements.
+School dashboard for Ascend International — live teacher absence alerts and weekly timetables in one place.
 
-Secrets (staff password, Discord webhook, Supabase service key) live in **Vercel environment variables** and serverless functions under `/api`. They are not in the browser bundle.
+**Live:** [ascend-dashboard-six.vercel.app](https://ascend-dashboard-six.vercel.app)
 
-## Vercel environment variables
+## Problem
 
-In Vercel → Project → **Settings → Environment Variables**, add:
+Students were checking cancellations and schedules in scattered places. Staff needed a simple way to publish absences and update periods without a heavyweight school system.
 
-| Name | Value |
-|------|--------|
-| `STAFF_PASSWORD` | Your staff password (e.g. `AscendIntl2026`) |
-| `DISCORD_WEBHOOK_URL` | Discord webhook URL |
-| `SUPABASE_URL` | `https://xxxx.supabase.co` |
-| `SUPABASE_ANON_KEY` | anon/public key (or prefer service role below) |
-| `SUPABASE_SERVICE_ROLE_KEY` | *(recommended)* service_role key for server inserts |
-| `CRON_SECRET` | Random string — Vercel Cron sends it to `/api/cleanup-absences` |
+## What it does
 
-Redeploy after saving env vars.
+- Batch-based **live absence alerts** (with optional urgent banner)
+- **Timetable assistant** — full day or full week views
+- **Staff tools** (password-gated): publish absence notices, edit periods
+- Student-facing flow: pick batch → see alerts + schedule
 
-## API routes
+## Stack
 
-| Route | Purpose |
-|-------|---------|
-| `POST /api/verify-staff` | Check staff password (unlock UI) |
-| `POST /api/publish-absence` | Password check + insert absence in Supabase |
-| `POST /api/update-absence` | Password check + update an absence |
-| `POST /api/delete-absence` | Password check + delete an absence |
-| `GET/POST /api/cleanup-absences` | Delete absences from previous months (Cron / staff) |
-| `POST /api/save-timetable-day` | Password check + save one weekday of timetable slots |
-| `POST /api/discord-alert` | Send Discord embed (webhook only on server) |
+- HTML · CSS · JavaScript
+- Deployed on Vercel
 
-## Monthly absence cleanup
+## How I built it
 
-On the **1st of each month** (around midnight Myanmar time), Vercel Cron calls `/api/cleanup-absences` and deletes absences dated **before** that month.
+- Started from a real school need (Ascend A-Level batches), not a generic CRUD demo
+- Separated student view vs staff publish/edit flows
+- Kept the UI fast to scan on phone during the school day
+- Shipped live so classmates and staff can actually use it
 
-Example: on 1 September, all August (and earlier) absences are removed. September’s notices stay.
-
-1. Add `CRON_SECRET` in Vercel env (any long random string)  
-2. Redeploy so the cron in `vercel.json` is registered  
-3. Optional manual run (staff password):  
-   `POST /api/cleanup-absences` with `{ "password": "YOUR_STAFF_PASSWORD" }`
-
-## Supabase setup
-
-1. Run `supabase/schema.sql` once (absences)  
-2. Run `supabase/timetable-slots.sql` once (editable timetable + `updated_at` badges)  
-3. *(Recommended)* Run `supabase/lock-absence-inserts.sql` so browsers can no longer insert absences directly  
-4. Keep anon key in `js/supabase-config.js` for **read + realtime** only  
-
-Staff **Edit Timetable** (unlocked Staff mode) writes through `/api/save-timetable-day`. Slots edited in the last 7 days show an **Updated** badge on the student timetable view.
-
-## Deploy
-
-Push to GitHub → Vercel auto-deploys. Share the Vercel URL.
-
-## Local note
-
-`python -m http.server` will **not** run `/api/*`. Use:
+## Run locally
 
 ```bash
-npx vercel dev
-```
+npx serve .
 
-## Staff password
-
-Set only in Vercel as `STAFF_PASSWORD`. Staff unlock/publish go through the API — students cannot read the password from `js/app.js`.
-
-## Urgent browser alerts
-
-On **Absence Alerts**, tap **Enable alerts** for OS notifications while the tab is open.
+Author
+Kyaw Zin Win · GitHub · kyawzinwin.software@gmail.com
